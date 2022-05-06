@@ -44,7 +44,7 @@ models_detail = {
 }
 
 model_type = str(sys.argv[1])
-saved_model_dir = f'model/{model_type}'
+saved_model_dir = f'{model_type}'
 
 model = models_detail[model_type]
 model.save(saved_model_dir)
