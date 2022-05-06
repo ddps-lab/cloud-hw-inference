@@ -155,7 +155,7 @@ def inference(saved_model_name, batch_size):
                 break
         iter_times = np.array(iter_times)
         acc_tpu = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
-        results = pd.DataFrame(columns = [f'tpu_{model_type}_{batch_size}'])
+        results = pd.DataFrame(columns = [f'GPU_{model_type}_{batch_size}'])
         results.loc['batch_size']              = [batch_size]
         results.loc['accuracy']                = [acc_tpu]
         results.loc['first_prediction_time']   = [first_iter_time * 1000]
