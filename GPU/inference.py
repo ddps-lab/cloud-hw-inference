@@ -141,7 +141,6 @@ def inference(saved_model_name, batch_size):
                 first_iter_time = time.time() - start_time
             else:
                 iter_times.append(time.time() - start_time)
-            print(iter_times)
             actual_labels.extend(label for label_list in batch_labels for label in label_list)
             pred_labels.extend(list(np.argmax(yhat_np, axis=1)))
 
