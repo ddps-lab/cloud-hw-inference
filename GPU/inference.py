@@ -158,8 +158,8 @@ def inference(saved_model_name, batch_size):
         results = pd.DataFrame(columns = [f'tpu_{model_type}_{batch_size}'])
         results.loc['batch_size']              = [batch_size]
         results.loc['accuracy']                = [acc_tpu]
-        results.loc['first_prediction_time']   = [first_iter_time]
-        results.loc['average_prediction_time'] = [np.mean(iter_times)]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['average_prediction_time'] = [np.mean(iter_times) * 1000]
         results.loc['load_time']               = [load_time]
         results.loc['wall_time']               = [time.time() - walltime_start]
 
