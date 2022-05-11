@@ -138,11 +138,6 @@ def get_dataset(batch_size, use_cache=False):
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     dataset = dataset.repeat(count=1)
     
-    if use_cache:
-        shutil.rmtree('tfdatacache', ignore_errors=True)
-        os.mkdir('tfdatacache')
-        dataset = dataset.cache(f'./tfdatacache/imagenet_val')
-    
     return dataset
 
 def calibrate_fn(n_calib, batch_size, dataset):
