@@ -1,4 +1,4 @@
-# saved pretrained tensorflow model: tensorflow==2.3.0
+# saved pretrained tensorflow model
 
 import tensorflow as tf
 import argparse
