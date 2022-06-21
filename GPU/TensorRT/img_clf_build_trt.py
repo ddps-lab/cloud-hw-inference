@@ -4,36 +4,16 @@ from functools import partial
 import tensorflow as tf
 from tensorflow.keras.applications import ( 
     vgg16,
-    vgg19,
-    resnet,
     resnet50,
-    resnet_v2,
     inception_v3,
-    inception_resnet_v2,
-    mobilenet,
     mobilenet_v2,
-    densenet,
-    nasnet,
     xception,
 )
 models = {
     'xception':xception,
     'vgg16':vgg16,
-    'vgg19':vgg19,
     'resnet50':resnet50,
-    'resnet101':resnet,
-    'resnet152':resnet,
-    'resnet50_v2':resnet_v2,
-    'resnet101_v2':resnet_v2,
-    'resnet152_v2':resnet_v2,
     'inception_v3':inception_v3,
-    'inception_resnet_v2':inception_resnet_v2,
-    'mobilenet':mobilenet,
-    'densenet121':densenet,
-    'densenet169':densenet,
-    'densenet201':densenet,
-    'nasnetlarge':nasnet,
-    'nasnetmobile':nasnet,
     'mobilenet_v2':mobilenet_v2
 }
 
@@ -74,21 +54,21 @@ def val_preprocessing(record):
     
     return image, label, label_text
 
-def get_dataset(batch_size, use_cache=False):
+def get_dataset(batchsize):
     data_dir = '/workspace/datasets/*'
     files = tf.io.gfile.glob(os.path.join(data_dir))
     dataset = tf.data.TFRecordDataset(files)
     
     dataset = dataset.map(map_func=val_preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.batch(batch_size=batch_size)
+    dataset = dataset.batch(batch_size=batchsize)
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     dataset = dataset.repeat(count=1)
     
     return dataset
 
-def calibrate_fn(n_calib, batch_size, dataset):
+def calibrate_fn(n_calib, batchsize, dataset):
     for i, (calib_image, _, _) in enumerate(dataset):
-        if i > n_calib // batch_size:
+        if i > n_calib // batchsize:
             break
         yield (calib_image,)
 
@@ -123,7 +103,7 @@ def build_FP_tensorrt_engine(model,precision, batchsize, dataset,num_engines):
     if precision=='INT8':
         #converter.convert(calibration_input_fn=calibration_input_fn)
         n_calib=50
-        converter.convert(calibration_input_fn=partial(calibrate_fn, n_calib, batch_size, 
+        converter.convert(calibration_input_fn=partial(calibrate_fn, n_calib, batchsize, 
                                                        dataset.shuffle(buffer_size=n_calib, reshuffle_each_iteration=True)))
     else:
         converter.convert()
@@ -152,12 +132,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     model = args.model
     # engine batchsize
-    batch_size = args.batchsize
+    batchsize = args.batchsize
     precision = args.precision
     num_engines = args.num_engines
 
-    dataset = get_dataset(batch_size)
+    dataset = get_dataset(batchsize)
 
     print("------TENSORRT BUILD ENGINE-----")
-    trt_compiled_model_dir = build_FP_tensorrt_engine(model,precision, batch_size, dataset,num_engines)
+    trt_compiled_model_dir = build_FP_tensorrt_engine(model,precision, batchsize, dataset,num_engines)
     print("Done")
