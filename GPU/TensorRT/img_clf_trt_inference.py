@@ -11,36 +11,16 @@ from tensorflow.python.saved_model import tag_constants
 
 from tensorflow.keras.applications import ( 
     vgg16,
-    vgg19,
-    resnet,
     resnet50,
-    resnet_v2,
     inception_v3,
-    inception_resnet_v2,
-    mobilenet,
     mobilenet_v2,
-    densenet,
-    nasnet,
     xception,
 )
 models = {
     'xception':xception,
     'vgg16':vgg16,
-    'vgg19':vgg19,
     'resnet50':resnet50,
-    'resnet101':resnet,
-    'resnet152':resnet,
-    'resnet50_v2':resnet_v2,
-    'resnet101_v2':resnet_v2,
-    'resnet152_v2':resnet_v2,
     'inception_v3':inception_v3,
-    'inception_resnet_v2':inception_resnet_v2,
-    'mobilenet':mobilenet,
-    'densenet121':densenet,
-    'densenet169':densenet,
-    'densenet201':densenet,
-    'nasnetlarge':nasnet,
-    'nasnetmobile':nasnet,
     'mobilenet_v2':mobilenet_v2
 }
 
@@ -80,29 +60,33 @@ def val_preprocessing(record):
     
     return image, label, label_text
 
-def get_dataset(batch_size):
+def get_dataset(batchsize):
     data_dir = '/workspace/datasets/*'
     files = tf.io.gfile.glob(os.path.join(data_dir))
     dataset = tf.data.TFRecordDataset(files)
     
     dataset = dataset.map(map_func=val_preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.batch(batch_size=batch_size)
+    dataset = dataset.batch(batch_size=batchsize)
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     dataset = dataset.repeat(count=1)
     
     return dataset
 
 
-def trt_predict_benchmark(trt_compiled_model_dir,precision, batcsize, display_every=5000, warm_up=50):
+def trt_predict_benchmark(trt_compiled_model_dir,precision, batchsize, display_every=5000, warm_up=50):
+    walltime_start = time.time()
 
     print('\n============================================================')
-    print(f'{trt_compiled_model_dir} - inference batch size: {batcsize}')
+    print(f'{trt_compiled_model_dir} - inference batch size: {batchsize}')
     print('=============================================================\n')
     
-    dataset = get_dataset(batcsize)
+    dataset = get_dataset(batchsize)
     
+    #compile한 model engine load 
+    load_start = time.time()
     saved_model_trt = tf.saved_model.load(trt_compiled_model_dir, tags=[tag_constants.SERVING])
     model_trt = saved_model_trt.signatures['serving_default']
+    load_time = time.time() - load_start
 
     pred_labels = []
     actual_labels = []
@@ -110,44 +94,47 @@ def trt_predict_benchmark(trt_compiled_model_dir,precision, batcsize, display_ev
     
     display_threshold = display_every
 
-    walltime_start = time.time()
     N=0
     for i, (validation_ds, batch_labels, _) in enumerate(dataset):
         N+=1
         if i==0:
             for w in range(warm_up):
-                _ = model_trt(validation_ds);
-                
+                _ = model_trt(validation_ds)
+        
+        
         start_time = time.time()
-        trt_results = model_trt(validation_ds);
+        trt_results = model_trt(validation_ds)
+        if i ==0:
+            first_iter_time = time.time() - start_time
         iter_times.append(time.time() - start_time)
         
         actual_labels.extend(label for label_list in batch_labels.numpy() for label in label_list)
         pred_labels.extend(list(tf.argmax(trt_results['predictions'], axis=1).numpy()))
-        if (i)*batcsize >= display_threshold:
-            print(f'Images {(i)*batcsize}/50000. Average i/s {np.mean(batcsize/np.array(iter_times[-display_every:]))}')
+        if (i)*batchsize >= display_threshold:
+            print(f'Images {(i)*batchsize}/50000. Average i/s {np.mean(batchsize/np.array(iter_times[-display_every:]))}')
             display_threshold+=display_every
     
-    print('Throughput: {:.0f} images/s'.format(N * batcsize / sum(iter_times)))
+    print('Throughput: {:.0f} images/s'.format(N * batchsize / sum(iter_times)))
 
     acc_trt = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
     iter_times = np.array(iter_times)
    
-    results = pd.DataFrame(columns = [f'trt_{precision}_{batcsize}'])
+    results = pd.DataFrame(columns = [f'trt_{precision}_{batchsize}'])
     results.loc['instance_type']           = [requests.get('http://169.254.169.254/latest/meta-data/instance-type').text]
-    results.loc['batchsize']               = [batcsize]
+    results.loc['batchsize']               = [batchsize]
     results.loc['accuracy']                = [acc_trt]
-    results.loc['prediction_time']         = [np.sum(iter_times)]
-    results.loc['wall_time']               = [time.time() - walltime_start]   
-    results.loc['images_per_sec_mean']     = [np.mean(batcsize / iter_times)]
-    results.loc['images_per_sec_std']      = [np.std(batcsize / iter_times, ddof=1)]
+    results.loc['prediction_time']         = [np.sum(iter_times)*1000]
+    results.loc['images_per_sec_mean']     = [np.mean(batchsize / iter_times)]
+    results.loc['images_per_sec_std']      = [np.std(batchsize / iter_times, ddof=1)]
+    results.loc['first_iteration_time']    = [first_iter_time]
+    results.loc['average_iteration_time']  = [np.mean(iter_times[1:])*1000]
+    results.loc['load_time']               = [load_time*1000]
+    results.loc['wall_time']               = [(time.time() - walltime_start)*1000]
     results.loc['latency_mean']            = [np.mean(iter_times) * 1000]
     results.loc['latency_99th_percentile'] = [np.percentile(iter_times, q=99, interpolation="lower") * 1000]
     results.loc['latency_median']          = [np.median(iter_times) * 1000]
     results.loc['latency_min']             = [np.min(iter_times) * 1000]
-    results.loc['first_batch']             = [iter_times[0]]
-    results.loc['next_batches_mean']       = [np.mean(iter_times[1:])]
-    print(results)
+    # print(results)
    
     return results, iter_times
 
@@ -158,16 +145,28 @@ if __name__ == "__main__":
     results = None
     parser = argparse.ArgumentParser()
     parser.add_argument('--model',default='resnet50' , type=str)
-    parser.add_argument('--batchsize',default=1,type=int)
+    parser.add_argument('--batch_list',default=[1,8,16,32,64,128,256,512], type=list)
     parser.add_argument('--engine_batch',default=8,type=int)
     parser.add_argument('--precision',default='FP32',type=str)
     args = parser.parse_args()
     model = args.model
-    batchsize = args.batchsize
+    # batchsize = args.batchsize
+    batch_list = args.batch_list
     engine_batch = args.engine_batch
     precision = args.precision
 
     trt_compiled_model_dir = f'{model}_{precision}_{engine_batch}'
 
-    print("------TENSORRT_INFERENCE-------")
-    trt_predict_benchmark(trt_compiled_model_dir,precision, batchsize)
+    results = pd.DataFrame()
+    for batch_size in batch_list:
+        opt = {'batch_size': batch_size}
+        iter_ds = pd.DataFrame()
+
+        print(f"------TENSORRT_INFERENCE : {model} {batch_size}-------")
+        res,iter_times = trt_predict_benchmark(trt_compiled_model_dir,precision, batch_size)
+        col_name = lambda opt: f'{model}_{batch_size}'
+        
+        iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+        results = pd.concat([results, res], axis=1)
+        print(results)
+    results.to_csv(f'{model}_{engine_batch}.csv')
