@@ -6,15 +6,8 @@ import os
 from tensorflow.keras.applications import (
     xception,
     vgg16,
-    vgg19,
-    resnet,
     resnet50,
-    resnet_v2,
     inception_v3,
-    inception_resnet_v2,
-    mobilenet,
-    densenet,
-    nasnet,
     mobilenet_v2
 )
 from tensorflow.keras.models import load_model, save_model
