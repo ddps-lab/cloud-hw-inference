@@ -140,6 +140,7 @@ if __name__ == "__main__":
     model = parser.parse_args().model
     batch_list = parser.parse_args().batch_list
 
+    # gpu 사용한다
     os.environ["CUDA_VISIBLE_DEVICES"]="0"
     gpus = tf.config.experimental.list_physical_devices('GPU')
 
@@ -162,4 +163,4 @@ if __name__ == "__main__":
         iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
         results = pd.concat([results, res], axis=1)
         print(results)
-        results.to_csv(f'{model}.csv')
+    results.to_csv(f'{model}.csv')
