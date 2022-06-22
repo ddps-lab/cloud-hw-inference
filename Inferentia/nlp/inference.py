@@ -16,8 +16,8 @@ class TFBertForSequenceClassificationDictIO(tf.keras.Model):
         return [logits]
 
 
-reloaded_model = tf.keras.models.load_model('./distilbert_b128')
-rewrapped_model = TFBertForSequenceClassificationDictIO(model_wrapped_traced)
+loaded_model = tf.keras.models.load_model('./distilbert_b128')
+rewrapped_model = TFBertForSequenceClassificationDictIO(loaded_model)
 
 #now you can reinsert our reloaded model back into our pipeline
 neuron_pipe.model = rewrapped_model
