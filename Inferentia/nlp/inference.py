@@ -27,7 +27,6 @@ neuron_pipe.model.config = pipe.model.config
 warnings.warn("NEURONCORE_GROUP_SIZES is being deprecated, if your application is using NEURONCORE_GROUP_SIZES please \
 see https://awsdocs-neuron.readthedocs-hosted.com/en/latest/release-notes/deprecation.html#announcing-end-of-support-for-neuroncore-group-sizes \
 for more details.", DeprecationWarning)
-%env NEURONCORE_GROUP_SIZES='16x1'
 
 
 string_inputs = [
