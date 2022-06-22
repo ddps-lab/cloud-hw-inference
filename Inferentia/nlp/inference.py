@@ -22,6 +22,7 @@ rewrapped_model = TFBertForSequenceClassificationDictIO(loaded_model)
 model_name = 'distilbert-base-uncased-finetuned-sst-2-english'
 
 neuron_pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
+pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
 
 #the first step is to modify the underlying tokenizer to create a static
 #input shape as inferentia does not work with dynamic input shapes
