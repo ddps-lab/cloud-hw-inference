@@ -19,6 +19,33 @@ class TFBertForSequenceClassificationDictIO(tf.keras.Model):
 loaded_model = tf.keras.models.load_model('./distilbert_b128')
 rewrapped_model = TFBertForSequenceClassificationDictIO(loaded_model)
 
+
+neuron_pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
+
+#the first step is to modify the underlying tokenizer to create a static
+#input shape as inferentia does not work with dynamic input shapes
+original_tokenizer = pipe.tokenizer
+
+
+#you intercept the function call to the original tokenizer
+#and inject our own code to modify the arguments
+def wrapper_function(*args, **kwargs):
+    kwargs['padding'] = 'max_length'
+    #this is the key line here to set a static input shape
+    #so that all inputs are set to a len of 128
+    kwargs['max_length'] = 128
+    kwargs['truncation'] = True
+    kwargs['return_tensors'] = 'tf'
+    return original_tokenizer(*args, **kwargs)
+
+#insert our wrapper function as the new tokenizer as well
+#as reinserting back some attribute information that was lost
+#when you replaced the original tokenizer with our wrapper function
+neuron_pipe.tokenizer = wrapper_function
+neuron_pipe.tokenizer.decode = original_tokenizer.decode
+neuron_pipe.tokenizer.mask_token_id = original_tokenizer.mask_token_id
+neuron_pipe.tokenizer.pad_token_id = original_tokenizer.pad_token_id
+neuron_pipe.tokenizer.convert_ids_to_tokens = original_tokenizer.convert_ids_to_tokens
 #now you can reinsert our reloaded model back into our pipeline
 neuron_pipe.model = rewrapped_model
 neuron_pipe.model.config = pipe.model.config
