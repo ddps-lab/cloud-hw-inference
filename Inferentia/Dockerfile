@@ -27,5 +27,7 @@ RUN pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
 
 #Install Neuron TensorFlow
 RUN pip install tensorflow-neuron[cc] "protobuf<4"
+RUN pip install --upgrade "transformers==4.1.0"
 
 RUN git clone https://github.com/jaeriver/cloud-hw-inference
+
