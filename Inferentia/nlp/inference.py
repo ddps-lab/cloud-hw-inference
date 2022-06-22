@@ -19,6 +19,7 @@ class TFBertForSequenceClassificationDictIO(tf.keras.Model):
 loaded_model = tf.keras.models.load_model('./distilbert_b128')
 rewrapped_model = TFBertForSequenceClassificationDictIO(loaded_model)
 
+model_name = 'distilbert-base-uncased-finetuned-sst-2-english'
 
 neuron_pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
 
