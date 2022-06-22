@@ -6,7 +6,6 @@ import tensorflow.neuron as tfn
 #this model tries to determine of the input text has a positive
 #or a negative sentiment.
 model_name = 'distilbert-base-uncased-finetuned-sst-2-english'
-
 pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
 original_tokenizer = pipe.tokenizer
 
@@ -22,6 +21,7 @@ def wrapper_function(*args, **kwargs):
 #insert our wrapper function as the new tokenizer as well
 #as reinserting back some attribute information that was lost
 #when you replaced the original tokenizer with our wrapper function
+neuron_pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
 neuron_pipe.tokenizer = wrapper_function
 neuron_pipe.tokenizer.decode = original_tokenizer.decode
 neuron_pipe.tokenizer.mask_token_id = original_tokenizer.mask_token_id
