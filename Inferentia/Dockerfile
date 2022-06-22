@@ -14,6 +14,7 @@ RUN yum install -y aws-neuron-runtime
 RUN yum install -y tar gzip
 
 ENV PATH="/opt/aws/neuron/bin:${PATH}"
+ENV NEURONCORE_GROUP_SIZES='4x1'
 
 RUN yum install -y python3 python3-pip
 RUN yum install -y python3.7-venv gcc-c++
