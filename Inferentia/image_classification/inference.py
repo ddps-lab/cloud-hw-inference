@@ -184,5 +184,4 @@ for model_type in model_types:
 
             iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
             results = pd.concat([results, res], axis=1)
-        display(results)
         results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
