@@ -150,37 +150,39 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 
     return results, iter_times
   
-model_type = ['resnet50', 'vgg16', 'xception', 'inception_v3', 'mobilenet_v2']
-# https://github.com/tensorflow/tensorflow/issues/29931
-temp = tf.zeros([8, 224, 224, 3])
-_ = models[model_type].preprocess_input(temp)
+model_types = ['resnet50', 'vgg16', 'xception', 'inception_v3', 'mobilenet_v2']
 
-# testing batch size
-batch_list = [1]
-num_of_cores = [1]
-user_batchs = [1]
-inf1_model_dir = f'{model_type}_inf1_saved_models'
+for model_type in model_types:
+    # https://github.com/tensorflow/tensorflow/issues/29931
+    temp = tf.zeros([8, 224, 224, 3])
+    _ = models[model_type].preprocess_input(temp)
 
-for user_batch in user_batchs:
-    iter_ds = pd.DataFrame()
-    results = pd.DataFrame()
-    for batch_size in batch_list:
-        for num_cores in num_of_cores:
-            opt ={'batch_size': batch_size, 'num_cores': num_of_cores}
-            compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
-            inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+    # testing batch size
+    batch_list = [1]
+    num_of_cores = [1]
+    user_batchs = [1]
+    inf1_model_dir = f'{model_type}_inf1_saved_models'
 
-            print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-            col_name = lambda opt: f'inf1_{batch_size}_multicores_{num_cores}'
+    for user_batch in user_batchs:
+        iter_ds = pd.DataFrame()
+        results = pd.DataFrame()
+        for batch_size in batch_list:
+            for num_cores in num_of_cores:
+                opt ={'batch_size': batch_size, 'num_cores': num_of_cores}
+                compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
+                inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
-            res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
-                                                                             batch_size = batch_size,
-                                                                             user_batch_size = batch_size*user_batch,
-                                                                             num_cores = num_cores,
-                                                                             use_cache=False, 
-                                                                             warm_up=10)
+                print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
+                col_name = lambda opt: f'inf1_{batch_size}_multicores_{num_cores}'
 
-        iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-        results = pd.concat([results, res], axis=1)
-    display(results)
-    results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+                res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
+                                                                                 batch_size = batch_size,
+                                                                                 user_batch_size = batch_size*user_batch,
+                                                                                 num_cores = num_cores,
+                                                                                 use_cache=False, 
+                                                                                 warm_up=10)
+
+            iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+            results = pd.concat([results, res], axis=1)
+        display(results)
+        results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
