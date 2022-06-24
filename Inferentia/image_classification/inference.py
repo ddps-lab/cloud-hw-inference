@@ -121,7 +121,9 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     load_time = time.time() - load_start
     counter = 0
     print(model_inf1)
-    for batch, batch_labels in ds:
+    try:
+        iterator = dataset.make_initializable_iterator()
+        batch, batch_labels = iterator.get_next()
         print('batch',batch)
         print(batch_labels)
         start_time = time.time()
@@ -138,6 +140,8 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
             display_threshold+=display_every
 
         counter+=1
+    except:
+        pass
     iter_times = np.array(iter_times)
     print('actual',actual_labels)
     print(pred_labels)
