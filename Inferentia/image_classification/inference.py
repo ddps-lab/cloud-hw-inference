@@ -84,7 +84,8 @@ def val_preprocessing(record):
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
     
     image = models[model_type].preprocess_input(image)
-    
+    print('image',image)
+    print('label',label)
     return image, label
 
 def get_dataset(batch_size, use_cache=False):
