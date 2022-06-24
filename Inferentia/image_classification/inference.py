@@ -24,6 +24,7 @@ from tensorflow.keras.applications import (
     mobilenet_v2
 )
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
 from concurrent import futures
 from itertools import compress
 
@@ -102,7 +103,7 @@ import os
 def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, user_batch_size, num_cores, use_cache=False, warm_up=10):
     print(f'Running model {neuron_saved_model_name}, user_batch_size: {user_batch_size}\n')
 
-    model_inf1 = tf.saved_model.load(neuron_saved_model_name)
+    model_inf1 = load_model(neuron_saved_model_name)
     
     inference_function = model_inf1.signatures['serving_default']
     walltime_start = time.time()
