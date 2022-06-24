@@ -139,8 +139,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
             display_threshold+=display_every
 
         counter+=1
-    except:
-        pass
+
     iter_times = np.array(iter_times)
     print('actual',actual_labels)
     print(pred_labels)
