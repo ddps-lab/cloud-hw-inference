@@ -121,6 +121,8 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     counter = 0
     print(model_inf1)
     for batch, batch_labels in ds:
+        print(batch)
+        print(batch_labels)
         start_time = time.time()
         yhat_np = inference_function(batch)
         if counter ==0:
