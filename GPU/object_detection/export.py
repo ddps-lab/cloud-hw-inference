@@ -1,7 +1,6 @@
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
 Export a YOLOv5 PyTorch model to other formats. TensorFlow exports authored by https://github.com/zldrobit
-
 Format                      | `export.py --include`         | Model
 ---                         | ---                           | ---
 PyTorch                     | -                             | yolov5s.pt
@@ -9,27 +8,22 @@ ONNX                        | `onnx`                        | yolov5s.onnx
 TensorRT                    | `engine`                      | yolov5s.engine
 TensorFlow SavedModel       | `saved_model`                 | yolov5s_saved_model/
 TensorFlow GraphDef         | `pb`                          | yolov5s.pb
-
-Environments:
-    Deep Learning AMI (Ubuntu 18.04) Version 61.2 (ami-093d97f38f56272ae)
-    source activate tensorflow2_p38
-
 Requirements:
-    $ pip3 install -r torch torchvision  # CPU
-    $ pip3 install -r torch torchvision  # GPU
-
+    $ pip3 install torch==1.10.1+cu102 torchvision==0.11.2+cu102 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.htmlpip3 install opencv-python
+  # GPU
 Usage:
-    $ python3 path/to/export.py --weights yolov5s.pt --include saved_model
-
+    $ python path/to/export.py --weights yolov5s.pt --include saved_model engine
 Inference:
-    $ python3 path/to/detect.py --weights yolov5s_saved_model        # TensorFlow SavedModel
-                                          yolov5s.engine             # TensorRT
-
+    $ python path/to/detect.py --weights yolov5s_saved_model        # TensorFlow SavedModel
+                                         yolov5s.onnx               # ONNX Runtime or OpenCV DNN with --dnn
+                                         yolov5s.engine             # TensorRT
 """
 
 import argparse
+import json
 import os
 import platform
+import subprocess
 import sys
 import time
 import warnings
@@ -37,6 +31,8 @@ from pathlib import Path
 
 import pandas as pd
 import torch
+import yaml
+from torch.utils.mobile_optimizer import optimize_for_mobile
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -57,15 +53,11 @@ def export_formats():
     # YOLOv5 export formats
     x = [
         ['PyTorch', '-', '.pt', True],
-        ['ONNX', 'onnx', '.onnx', True],
         ['TensorRT', 'engine', '.engine', True],
         ['TensorFlow SavedModel', 'saved_model', '_saved_model', True],
         ['TensorFlow GraphDef', 'pb', '.pb', True],
-        ['TensorFlow Lite', 'tflite', '.tflite', False],
-       ]
+        ]
     return pd.DataFrame(x, columns=['Format', 'Argument', 'Suffix', 'GPU'])
-
-
 
 
 def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorstr('ONNX:')):
@@ -130,7 +122,7 @@ def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorst
 
 def export_engine(model, im, file, train, half, simplify, workspace=4, verbose=False, prefix=colorstr('TensorRT:')):
     # YOLOv5 TensorRT export https://developer.nvidia.com/tensorrt
-    # 모델을 onnx 로 변환하고 변환된 onnx 모델을 tensorRT로 변환한다. 
+    # torch -> onnx -> tensorRT 
     try:
         assert im.device.type != 'cpu', 'export running on CPU but must be on GPU, i.e. `python export.py --device 0`'
         try:
@@ -177,6 +169,8 @@ def export_engine(model, im, file, train, half, simplify, workspace=4, verbose=F
             LOGGER.info(f'{prefix}\toutput "{out.name}" with shape {out.shape} and dtype {out.dtype}')
 
         LOGGER.info(f'{prefix} building FP{16 if builder.platform_has_fast_fp16 and half else 32} engine in {f}')
+        
+        # default 로 FP32 로 engine 을 build 하며 만약 FP16으로 build 하고 싶은 경우 half 를 True 로 입력하면 됨
         if builder.platform_has_fast_fp16 and half:
             config.set_flag(trt.BuilderFlag.FP16)
         with builder.build_engine(network, config) as engine, open(f, 'wb') as t:
@@ -203,14 +197,16 @@ def export_saved_model(model,
     try:
         import tensorflow as tf
         from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
-        print(tf.__version__)
+
         from models.tf import TFDetect, TFModel
 
         LOGGER.info(f'\n{prefix} starting export with tensorflow {tf.__version__}...')
         f = str(file).replace('.pt', '_saved_model')
         batch_size, ch, *imgsz = list(im.shape)  # BCHW
 
+        # export 시 imgsz 가 입력파라미터로 입려되는데 imgsize 에 batchsize 정보가 있음 
         tf_model = TFModel(cfg=model.yaml, model=model, nc=model.nc, imgsz=imgsz)
+
         im = tf.zeros((batch_size, *imgsz, ch))  # BHWC order for TensorFlow
         _ = tf_model.predict(im, tf_nms, agnostic_nms, topk_per_class, topk_all, iou_thres, conf_thres)
 
@@ -261,6 +257,7 @@ def export_pb(keras_model, file, prefix=colorstr('TensorFlow GraphDef:')):
         LOGGER.info(f'\n{prefix} export failure: {e}')
 
 
+
 @torch.no_grad()
 def run(
         data=ROOT / 'data/coco128.yaml',  # 'dataset.yaml path'
@@ -273,6 +270,7 @@ def run(
         inplace=False,  # set YOLOv5 Detect() inplace=True
         train=False,  # model.train() mode
         keras=False,  # use Keras
+        optimize=False,  # TorchScript: optimize for mobile
         int8=False,  # CoreML/TF INT8 quantization
         dynamic=False,  # ONNX/TF: dynamic axes
         simplify=False,  # ONNX: simplify model
@@ -290,15 +288,18 @@ def run(
     include = [x.lower() for x in include]  # to lowercase
     fmts = tuple(export_formats()['Argument'][1:])  # --include arguments
     flags = [x in include for x in fmts]
+    print(flags)
     assert sum(flags) == len(include), f'ERROR: Invalid --include {include}, valid --include arguments are {fmts}'
-    onnx, engine, saved_model, pb, tflite= flags  # export booleans
+    engine, saved_model, pb = flags  # export booleans
     file = Path(url2file(weights) if str(weights).startswith(('http:/', 'https:/')) else weights)  # PyTorch weights
 
     # Load PyTorch model
     device = select_device(device)
     if half:
-        assert device.type != 'cpu' , '--half only compatible with GPU export, i.e. use --device 0'
+        assert device.type != 'cpu' or coreml or xml, '--half only compatible with GPU export, i.e. use --device 0'
         assert not dynamic, '--half not compatible with --dynamic, i.e. use either --half or --dynamic but not both'
+    
+    # load torch model - torch version
     model = attempt_load(weights, device=device, inplace=True, fuse=True)  # load FP32 model
     nc, names = model.nc, model.names  # number of classes, class names
 
@@ -329,28 +330,27 @@ def run(
     # Exports
     f = [''] * 10  # exported filenames
     warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)  # suppress TracerWarning
-
     if engine:  # TensorRT required before ONNX
         f[1] = export_engine(model, im, file, train, half, simplify, workspace, verbose)
-    if onnx :  # OpenVINO requires ONNX
-        f[2] = export_onnx(model, im, file, opset, train, dynamic, simplify)
 
     # TensorFlow Exports
-    if any((saved_model, pb, tflite)):
-        if int8:  # TFLite --int8 bug https://github.com/ultralytics/yolov5/issues/5707
+    if any((saved_model, pb)):
+        if int8 :  # TFLite --int8 bug https://github.com/ultralytics/yolov5/issues/5707
             check_requirements(('flatbuffers==1.12',))  # required before `import tensorflow`
-        assert not tflite , 'TFLite and TF.js models must be exported separately, please pass only one type.'
         model, f[5] = export_saved_model(model.cpu(),
                                          im,
                                          file,
                                          dynamic,
-                                         tf_nms=nms or agnostic_nms ,
-                                         agnostic_nms=agnostic_nms ,
+                                         tf_nms=nms or agnostic_nms or tfjs,
+                                         agnostic_nms=agnostic_nms or tfjs,
                                          topk_per_class=topk_per_class,
                                          topk_all=topk_all,
                                          iou_thres=iou_thres,
                                          conf_thres=conf_thres,
                                          keras=keras)
+        if pb :  # pb prerequisite to tfjs
+            f[6] = export_pb(model, file)
+
     # Finish
     f = [str(x) for x in f if x]  # filter out '' and None
     if any(f):
@@ -368,6 +368,7 @@ def parse_opt():
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='dataset.yaml path')
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model.pt path(s)')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640, 640], help='image (h, w)')
+    # batchsize default 1
     parser.add_argument('--batch-size', type=int, default=1, help='batch size')
     parser.add_argument('--device', default='cpu', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--half', action='store_true', help='FP16 half-precision export')
@@ -389,7 +390,7 @@ def parse_opt():
     parser.add_argument('--conf-thres', type=float, default=0.25, help='TF.js NMS: confidence threshold')
     parser.add_argument('--include',
                         nargs='+',
-                        default=['torchscript', 'onnx'],
+                        default=['saved_model'],
                         help='torchscript, onnx, openvino, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs')
     opt = parser.parse_args()
     print_args(vars(opt))
