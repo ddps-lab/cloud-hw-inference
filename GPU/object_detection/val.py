@@ -1,10 +1,8 @@
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
 Validate a trained YOLOv5 model accuracy on a custom dataset
-
 Usage:
     $ python path/to/val.py --weights yolov5s.pt --data coco128.yaml --img 640
-
 Usage - formats:
     $ python path/to/val.py --weights yolov5s.pt                 # PyTorch
                                       yolov5s.torchscript        # TorchScript
@@ -43,6 +41,10 @@ from utils.general import (LOGGER, check_dataset, check_img_size, check_requirem
 from utils.metrics import ConfusionMatrix, ap_per_class, box_iou
 from utils.plots import output_to_target, plot_images, plot_val_study
 from utils.torch_utils import select_device, time_sync
+
+import tensorflow as tf
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
 
 def save_one_txt(predn, save_conf, shape, file):
