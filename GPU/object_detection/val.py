@@ -1,15 +1,23 @@
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
 Validate a trained YOLOv5 model accuracy on a custom dataset
+
 Usage:
-    $ python path/to/val.py --weights yolov5s_saved_model 
+    $ python path/to/val.py --weights yolov5s.pt --data coco128.yaml --img 640
+
 Usage - formats:
     $ python path/to/val.py --weights yolov5s.pt                 # PyTorch
+                                      yolov5s.torchscript        # TorchScript
                                       yolov5s.onnx               # ONNX Runtime or OpenCV DNN with --dnn
+                                      yolov5s.xml                # OpenVINO
                                       yolov5s.engine             # TensorRT
+                                      yolov5s.mlmodel            # CoreML (macOS-only)
                                       yolov5s_saved_model        # TensorFlow SavedModel
                                       yolov5s.pb                 # TensorFlow GraphDef
+                                      yolov5s.tflite             # TensorFlow Lite
+                                      yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
 """
+
 import argparse
 import json
 import os
@@ -59,8 +67,7 @@ def save_one_json(predn, jdict, path, class_map):
             'bbox': [round(x, 3) for x in b],
             'score': round(p[4], 5)})
 
-# 추론결과를 가지고 성능지표 계산하기 위한 함수 
-# 추론하는 과정이 아님 
+
 def process_batch(detections, labels, iouv):
     """
     Return correct predictions matrix. Both sets of boxes are in (x1, y1, x2, y2) format.
@@ -139,7 +146,7 @@ def run(
         else:
             device = model.device
             if not (pt or jit):
-                batch_size = batch_size  
+                batch_size = batch_size  # export.py models default to batch-size 1
 
         # Data
         data = check_dataset(data)  # check
@@ -162,8 +169,6 @@ def run(
         pad = 0.0 if task in ('speed', 'benchmark') else 0.5
         rect = False if task == 'benchmark' else pt  # square inference for benchmarks
         task = task if task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
-        
-        # dataloader 에서 전체 데이터셋을 배치사이즈 크기별로 잘라서 제공 
         dataloader = create_dataloader(data[task],
                                        imgsz,
                                        batch_size,
@@ -197,7 +202,6 @@ def run(
         dt[0] += t2 - t1
 
         # Inference
-        # 실제 추론을 진행하는 부분 
         out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
         dt[1] += time_sync() - t2
 
