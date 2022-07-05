@@ -16,6 +16,7 @@ models = {
     'inception_v3':inception_v3,
     'mobilenet_v2':mobilenet_v2
 }
+IMGSZ=224
 
 
 def deserialize_image_record(record):
@@ -48,7 +49,7 @@ def val_preprocessing(record):
     new_width = tf.cast(tf.math.rint(width * scale), tf.int32)
     
     image = tf.image.resize(image, [new_height, new_width], method='bicubic')
-    image = tf.image.resize_with_crop_or_pad(image, 224, 224)
+    image = tf.image.resize_with_crop_or_pad(image, IMGSZ, IMGSZ)
     
     image = models[model].preprocess_input(image)
     
@@ -135,6 +136,9 @@ if __name__ == "__main__":
     batchsize = args.batchsize
     precision = args.precision
     num_engines = args.num_engines
+
+    if model == "inception_v3" or model == "xception":
+        IMGSZ = 299 
 
     dataset = get_dataset(batchsize)
 
