@@ -24,6 +24,9 @@ models = {
     'mobilenet_v2':mobilenet_v2
 }
 
+IMGSZ=224
+
+
 def deserialize_image_record(record):
     feature_map = {'image/encoded': tf.io.FixedLenFeature([], tf.string, ''),
                   'image/class/label': tf.io.FixedLenFeature([1], tf.int64, -1),
@@ -54,7 +57,7 @@ def val_preprocessing(record):
     new_width = tf.cast(tf.math.rint(width * scale), tf.int32)
     
     image = tf.image.resize(image, [new_height, new_width], method='bicubic')
-    image = tf.image.resize_with_crop_or_pad(image, 224, 224)
+    image = tf.image.resize_with_crop_or_pad(image, IMGSZ, IMGSZ)
     
     image = models[model].preprocess_input(image)
     
@@ -155,6 +158,8 @@ if __name__ == "__main__":
     engine_batch = args.engine_batch
     precision = args.precision
 
+    if model == "inception_v3" or model == "xception":
+        IMGSZ = 299 
     trt_compiled_model_dir = f'{model}_{precision}_{engine_batch}'
 
     results = pd.DataFrame()
