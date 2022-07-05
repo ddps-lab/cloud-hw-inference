@@ -11,9 +11,9 @@ import json
 import numpy as np
 import time
 
+model_name = model_type = 'bert-base-uncased'
 inf1_model_dir = f'{model_type}_inf1_saved_models'
 saved_model_dir = f'{model_type}_saved_model'
-model_name = model_type = 'bert-base-uncased'
 
 #benchmark batch 128 neuron model
 neuron_b128_times = []
