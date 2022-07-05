@@ -1,23 +1,33 @@
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
 Validate a trained YOLOv5 model accuracy on a custom dataset
+
 Usage:
-    $ python path/to/val.py --weights yolov5s_saved_model 
+    $ python path/to/val.py --weights yolov5s.pt --data coco128.yaml --img 640
+
 Usage - formats:
     $ python path/to/val.py --weights yolov5s.pt                 # PyTorch
+                                      yolov5s.torchscript        # TorchScript
+                                      yolov5s.onnx               # ONNX Runtime or OpenCV DNN with --dnn
+                                      yolov5s.xml                # OpenVINO
                                       yolov5s.engine             # TensorRT
+                                      yolov5s.mlmodel            # CoreML (macOS-only)
                                       yolov5s_saved_model        # TensorFlow SavedModel
                                       yolov5s.pb                 # TensorFlow GraphDef
+                                      yolov5s.tflite             # TensorFlow Lite
+                                      yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
 """
+
 import argparse
 import json
 import os
 import sys
 from pathlib import Path
-
+import time 
 import numpy as np
 import torch
 from tqdm import tqdm
+import pandas as pd
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -58,8 +68,7 @@ def save_one_json(predn, jdict, path, class_map):
             'bbox': [round(x, 3) for x in b],
             'score': round(p[4], 5)})
 
-# 추론결과를 가지고 성능지표 계산하기 위한 함수 
-# 추론하는 과정이 아님 
+
 def process_batch(detections, labels, iouv):
     """
     Return correct predictions matrix. Both sets of boxes are in (x1, y1, x2, y2) format.
@@ -129,17 +138,20 @@ def run(
         (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
 
         # Load model
+        load_s_time=time.time()
         model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
-        stride, pt, engine, saved_model, pb = model.stride , model.pt, model.engine, model.saved_model, model.pb
-        # stride, pt, jit, engine = model.stride, model.pt, model.jit, model.engine
+        load_time = time.time()-load_s_time
+
+        stride, pt, jit, engine = model.stride, model.pt, model.jit, model.engine
         imgsz = check_img_size(imgsz, s=stride)  # check image size
         half = model.fp16  # FP16 supported on limited backends with CUDA
         if engine:
             batch_size = model.batch_size
         else:
             device = model.device
-            if not pt:
-                batch_size = batch_size  
+            if not (pt or jit):
+                batch_size = batch_size  # export.py models default to batch-size 1
+                #LOGGER.info(f'Forcing --batch-size 1 square inference (1,3,{imgsz},{imgsz}) for non-PyTorch models')
 
         # Data
         data = check_dataset(data)  # check
@@ -162,8 +174,7 @@ def run(
         pad = 0.0 if task in ('speed', 'benchmark') else 0.5
         rect = False if task == 'benchmark' else pt  # square inference for benchmarks
         task = task if task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
-        
-        # dataloader 에서 전체 데이터셋을 배치사이즈 크기별로 잘라서 제공 
+        data_s_time = time.time()
         dataloader = create_dataloader(data[task],
                                        imgsz,
                                        batch_size,
@@ -173,7 +184,7 @@ def run(
                                        rect=rect,
                                        workers=workers,
                                        prefix=colorstr(f'{task}: '))[0]
-
+        print("Data Load time :",time.time()-data_s_time)
     seen = 0
     confusion_matrix = ConfusionMatrix(nc=nc)
     names = {k: v for k, v in enumerate(model.names if hasattr(model, 'names') else model.module.names)}
@@ -184,6 +195,7 @@ def run(
     jdict, stats, ap, ap_class = [], [], [], []
     callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')  # progress bar
+    iter_time=[]
     for batch_i, (im, targets, paths, shapes) in enumerate(pbar):
         callbacks.run('on_val_batch_start')
         t1 = time_sync()
@@ -195,12 +207,19 @@ def run(
         nb, _, height, width = im.shape  # batch size, channels, height, width
         t2 = time_sync()
         dt[0] += t2 - t1
-
+        
         # Inference
-        # 실제 추론을 진행하는 부분 
-        out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
-        dt[1] += time_sync() - t2
-
+        try:
+            inf_s_time=time.time()
+            out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
+            inference_time = time.time()-inf_s_time 
+            if batch_i==0:
+                first_iter_time = inference_time
+            else:
+                iter_time.append(inference_time)
+            dt[1] += time_sync() - t2
+        except:
+            continue
         # Loss
         if compute_loss:
             loss += compute_loss([x.float() for x in train_out], targets)[1]  # box, obj, cls
@@ -248,6 +267,8 @@ def run(
                 save_one_json(predn, jdict, path, class_map)  # append to COCO-JSON dictionary
             callbacks.run('on_val_image_end', pred, predn, path, names, im[si])
 
+
+
         # Plot images
         if plots and batch_i < 3:
             plot_images(im, targets, paths, save_dir / f'val_batch{batch_i}_labels.jpg', names)  # labels
@@ -255,6 +276,16 @@ def run(
 
         callbacks.run('on_val_batch_end')
 
+    iter_times = np.array(iter_time)
+
+    results = pd.DataFrame(columns = [f'CPU_YoloV5_{batch_size}'])
+    results.loc['batch_size']              = [batch_size]
+    results.loc['prediction_time']         = [np.sum(iter_times)*1000]
+    results.loc['images_per_sec_mean']     = [np.mean(batch_size / iter_times)]
+    results.loc['first_iteration_time']   = [first_iter_time * 1000]
+    results.loc['average_iteration_time'] = [np.mean(iter_times) * 1000]
+    results.loc['load_time']               = [load_time*1000]
+    results.to_csv(f'YoloV5_{batch_size}.csv')
     # Compute metrics
     stats = [torch.cat(x, 0).cpu().numpy() for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
@@ -279,7 +310,7 @@ def run(
     if not training:
         shape = (batch_size, 3, imgsz, imgsz)
         LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {shape}' % t)
-
+        print(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {shape}' % t)
     # Plots
     if plots:
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
