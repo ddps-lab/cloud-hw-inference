@@ -20,7 +20,7 @@ neuron_b128_times = []
 batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 for compiled_batch in compiled_batch_sizes:
-    compiled_model_dir = f'{model_type}_batch_{compiled_batch_size}_inf1'
+    compiled_model_dir = f'{model_type}_batch_{compiled_batch}_inf1'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
     loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
     for batch_size in batch_sizes:
