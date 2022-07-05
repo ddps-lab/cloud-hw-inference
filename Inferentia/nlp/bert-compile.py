@@ -25,7 +25,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, use_static
     shutil.rmtree(inf1_compiled_model_dir, ignore_errors=True)
 
     seq_length = 128
-    dtype = "float32"
+    dtype = "int32"
     inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
     
     start_time = time.time()
