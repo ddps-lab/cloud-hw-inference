@@ -6,6 +6,7 @@ import os
 import shutil
 import json
 import numpy as np
+import time
 
 model_name = model_type = 'bert-base-uncased'
 
