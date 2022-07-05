@@ -5,15 +5,9 @@ Usage:
     $ python path/to/val.py --weights yolov5s.pt --data coco128.yaml --img 640
 Usage - formats:
     $ python path/to/val.py --weights yolov5s.pt                 # PyTorch
-                                      yolov5s.torchscript        # TorchScript
-                                      yolov5s.onnx               # ONNX Runtime or OpenCV DNN with --dnn
-                                      yolov5s.xml                # OpenVINO
                                       yolov5s.engine             # TensorRT
-                                      yolov5s.mlmodel            # CoreML (macOS-only)
                                       yolov5s_saved_model        # TensorFlow SavedModel
                                       yolov5s.pb                 # TensorFlow GraphDef
-                                      yolov5s.tflite             # TensorFlow Lite
-                                      yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
 """
 
 import argparse
@@ -204,9 +198,11 @@ def run(
         dt[0] += t2 - t1
 
         # Inference
-        out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
-        dt[1] += time_sync() - t2
-
+        try:
+            out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
+            dt[1] += time_sync() - t2
+        except:
+            continue
         # Loss
         if compute_loss:
             loss += compute_loss([x.float() for x in train_out], targets)[1]  # box, obj, cls
