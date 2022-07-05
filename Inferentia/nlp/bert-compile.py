@@ -29,7 +29,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
     
     start_time = time.time()
-    compiled_model = tfn.trace(model, inputs, verbose=1, compiler_args = ['--neuroncore-pipeline-cores', str(core)])
+    compiled_model = tfn.trace(model, inputs, compiler_args = ['--neuroncore-pipeline-cores', str(core)])
     compiled_res = compiled_model.save(inf1_compiled_model_dir)
     print(f'Compile time: {time.time() - start_time}')
     
