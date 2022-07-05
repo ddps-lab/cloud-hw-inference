@@ -125,7 +125,7 @@ if __name__ == "__main__":
     results = None
     parser = argparse.ArgumentParser()
     parser.add_argument('--model',default='resnet50' , type=str)
-    parser.add_argument('--batchsize',default=8,type=int)
+    parser.add_argument('--batchsize',default=64,type=int)
     parser.add_argument('--precision',default='FP32',type=str)
     parser.add_argument('--num_engines',default=100,type=int)
 
