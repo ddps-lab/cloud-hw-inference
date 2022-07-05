@@ -27,7 +27,7 @@ for compiled_batch in compiled_batch_sizes:
         seq_length = 128
         dtype = "int32"
         inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
-        for i in range(10):
+        for i in range(1000):
             start = time.time()
             outputs = loaded_model(inputs)
             end = time.time()
