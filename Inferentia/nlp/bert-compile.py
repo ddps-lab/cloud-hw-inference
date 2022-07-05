@@ -16,11 +16,11 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=2e-5, epsilon=1e-
 original_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
 
-def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=1, use_static_weights=False):
-    print(f'-----------batch size: {batch_size}, num cores: {num_cores}----------')
+def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, use_static_weights=False):
+    print(f'-----------batch size: {batch_size}----------')
     print('Compiling...')
     
-    compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
+    compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
     shutil.rmtree(inf1_compiled_model_dir, ignore_errors=True)
 
@@ -29,7 +29,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
     
     start_time = time.time()
-    compiled_model = tfn.trace(model, inputs, compiler_args = ['--neuroncore-pipeline-cores', str(core)])
+    compiled_model = tfn.trace(model, inputs)
     compiled_res = compiled_model.save(inf1_compiled_model_dir)
     print(f'Compile time: {time.time() - start_time}')
     
@@ -51,8 +51,6 @@ saved_model_dir = f'{model_type}_saved_model'
 
 # testing batch size
 batch_list = [1,2,4,8,16,32,64]
-num_of_cores = [1, 2, 3, 4]
 for batch in batch_list:
-    for core in num_of_cores:
-        print('batch size:', batch,'core nums', core,'compile start')
-        compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=batch, num_cores=core)
+    print('batch size:', batch, 'compile start')
+    compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=batch)
