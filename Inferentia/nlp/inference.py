@@ -16,7 +16,6 @@ inf1_model_dir = f'{model_type}_inf1_saved_models'
 saved_model_dir = f'{model_type}_saved_model'
 
 #benchmark batch 128 neuron model
-neuron_b128_times = []
 batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 for compiled_batch in compiled_batch_sizes:
@@ -24,6 +23,7 @@ for compiled_batch in compiled_batch_sizes:
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
     loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
     for batch_size in batch_sizes:
+        neuron_b128_times = []
         seq_length = 128
         dtype = "int32"
         inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
