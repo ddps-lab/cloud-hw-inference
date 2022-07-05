@@ -2,6 +2,7 @@ from transformers import pipeline
 from transformers import TFBertForSequenceClassification, BertTokenizer
 import tensorflow as tf
 import tensorflow.neuron as tfn
+import os
 
 model_name = model_type = 'bert-base-uncased'
 
