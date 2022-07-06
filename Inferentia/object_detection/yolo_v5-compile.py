@@ -43,7 +43,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, use_static
     example_input = np.zeros([batch_size,640,640,3], dtype='float32')
     start_time = time.time()
     compiled_model = tfn.trace(model,example_input) 
-    compiled_res = compiled_model.save(inf1_model_dir)
+    compiled_res = compiled_model.save(inf1_compiled_model_dir)
     print(f'Compile time: {time.time() - start_time}')
 
     print(inf1_compiled_model_dir)
