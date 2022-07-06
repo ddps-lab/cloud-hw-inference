@@ -34,7 +34,7 @@ def no_fuse_condition(op):
 
 def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, use_static_weights=False):
     
-    compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
+    compiled_model_dir = f'{model_type}_batch_{batch_size}'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
     shutil.rmtree(inf1_compiled_model_dir, ignore_errors=True)
     
