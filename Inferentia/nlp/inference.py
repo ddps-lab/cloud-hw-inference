@@ -33,11 +33,11 @@ for compiled_batch in compiled_batch_sizes:
     load_time = time.time() - load_start
     
     first_iter_time = 0
-    iter_times = []
     
     counter = 0
     result_list = pd.DataFrame()
     for batch_size in batch_sizes:
+        iter_times = []
         seq_length = 128
         dtype = "int32"
         inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
@@ -52,15 +52,15 @@ for compiled_batch in compiled_batch_sizes:
                 
             counter+=1
             
-    iter_times = np.array(iter_times)
-    results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
-    results.loc['batch_size']              = [batch_size]
-    results.loc['accuracy']                = [0]
-    results.loc['first_prediction_time']   = [first_iter_time * 1000]
-    results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
-    results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
-    results.loc['load_time']               = [load_time * 1000]
-    results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
-    print(results)    
-result_list = pd.concat([result_list, results], axis = 1)
-print(result_list)
+            iter_times = np.array(iter_times)
+            results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
+            results.loc['batch_size']              = [batch_size]
+            results.loc['accuracy']                = [0]
+            results.loc['first_prediction_time']   = [first_iter_time * 1000]
+            results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+            results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+            results.loc['load_time']               = [load_time * 1000]
+            results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
+            print(results)    
+        result_list = pd.concat([result_list, results], axis = 1)
+        print(result_list)
