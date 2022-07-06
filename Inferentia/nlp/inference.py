@@ -52,15 +52,15 @@ for compiled_batch in compiled_batch_sizes:
                 
             counter+=1
             
-            iter_times = np.array(iter_times)
-            results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
-            results.loc['batch_size']              = [batch_size]
-            results.loc['accuracy']                = [0]
-            results.loc['first_prediction_time']   = [first_iter_time * 1000]
-            results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
-            results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
-            results.loc['load_time']               = [load_time * 1000]
-            results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
-            print(results)    
+        iter_times = np.array(iter_times)
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
+        results.loc['batch_size']              = [batch_size]
+        results.loc['accuracy']                = [0]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+        results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+        results.loc['load_time']               = [load_time * 1000]
+        results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
+        print(results)    
         result_list = pd.concat([result_list, results], axis = 1)
-        print(result_list)
+    print(result_list)
