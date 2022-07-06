@@ -98,10 +98,10 @@ for model_type in model_types:
 
     
 def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=1, use_static_weights=False):
-    print(f'-----------batch size: {batch_size}, num cores: {num_cores}----------')
+    print(f'-----------batch size: {batch_size}----------')
     print('Compiling...')
     
-    compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
+    compiled_model_dir = f'{model_type}_batch_{batch_size}'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
     shutil.rmtree(inf1_compiled_model_dir, ignore_errors=True)
 
@@ -130,9 +130,7 @@ for model_type in model_types:
 
 
     # testing batch size
-    batch_list = [1]
-    num_of_cores = [1]
+    batch_list = [1, 2, 4, 8, 16, 32, 64]
     for batch in batch_list:
-        for core in num_of_cores:
-            print('batch size:', batch,'core nums', core,'compile start')
-            compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=batch, num_cores=core)
+        print('batch size:', batch,'compile start')
+        compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=batch)
