@@ -19,9 +19,11 @@ saved_model_dir = f'{model_type}_saved_model'
 #benchmark batch 128 neuron model
 batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+
 for compiled_batch in compiled_batch_sizes:
     iter_ds = pd.DataFrame()
     results = pd.DataFrame()
+    walltime_start = time.time()
     
     compiled_model_dir = f'{model_type}_batch_{compiled_batch}_inf1'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
