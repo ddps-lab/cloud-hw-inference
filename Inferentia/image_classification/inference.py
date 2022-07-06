@@ -101,7 +101,7 @@ def get_dataset(batch_size, use_cache=False):
   
 import os
     
-def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, user_batch_size, num_cores, use_cache=False, warm_up=10):
+def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, user_batch_size, use_cache=False, warm_up=10):
     print(f'Running model {neuron_saved_model_name}, user_batch_size: {user_batch_size}\n')
 
     model_inf1 = load_model(neuron_saved_model_name)
@@ -162,29 +162,26 @@ for model_type in model_types:
     _ = models[model_type].preprocess_input(temp)
 
     # testing batch size
-    batch_list = [1]
-    num_of_cores = [1]
-    user_batchs = [1]
+    batch_list = [1, 2, 4, 8, 16, 32, 64]
+    user_batchs = [1, 2, 4, 8, 16, 32, 64]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
 
     for user_batch in user_batchs:
         iter_ds = pd.DataFrame()
         results = pd.DataFrame()
         for batch_size in batch_list:
-            for num_cores in num_of_cores:
-                opt ={'batch_size': batch_size, 'num_cores': num_of_cores}
-                compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
-                inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+            opt ={'batch_size': batch_size}
+            compiled_model_dir = f'{model_type}_batch_{batch_size}'
+            inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
-                print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-                col_name = lambda opt: f'inf1_{batch_size}_multicores_{num_cores}'
+            print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
+            col_name = lambda opt: f'inf1_{batch_size}'
 
-                res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
-                                                                                 batch_size = batch_size,
-                                                                                 user_batch_size = batch_size*user_batch,
-                                                                                 num_cores = num_cores,
-                                                                                 use_cache=False, 
-                                                                                 warm_up=10)
+            res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
+                                                                             batch_size = batch_size,
+                                                                             user_batch_size = batch_size*user_batch,
+                                                                             use_cache=False, 
+                                                                             warm_up=10)
 
             iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
             results = pd.concat([results, res], axis=1)
