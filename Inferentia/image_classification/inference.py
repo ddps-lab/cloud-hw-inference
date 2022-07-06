@@ -104,7 +104,9 @@ import os
 def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, user_batch_size, use_cache=False, warm_up=10):
     print(f'Running model {neuron_saved_model_name}, user_batch_size: {user_batch_size}\n')
 
+    load_start = time.time()
     model_inf1 = load_model(neuron_saved_model_name)
+    load_time = time.time() - load_start
     
     inference_function = model_inf1.signatures['serving_default']
     walltime_start = time.time()
@@ -117,8 +119,6 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     display_threshold = display_every
     
     ds = get_dataset(user_batch_size, use_cache)
-    load_start = time.time()
-    load_time = time.time() - load_start
     counter = 0
     print(model_inf1)
     
