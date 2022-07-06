@@ -23,24 +23,26 @@ def trt_predict_benchmark(precision, batch_size,imgsz, display_every=100, warm_u
     # trt_compiled_model_dir = build_tensorrt_engine(precision, batch_size, dataset)
 
     walltime_start = time.time()
-
+    m_load_time = time.time()
     saved_model_trt = tf.saved_model.load(trt_compiled_model_dir, tags=[tag_constants.SERVING])
     model_trt = saved_model_trt.signatures[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
-        
+    load_time = time.time()-m_load_time
+
     pred_labels = []
     # actual_labels = []
     iter_times = []
     
     display_every = 5000
     display_threshold = display_every
-    initial_time = time.time()
 
     image_shape = (imgsz, imgsz,3)
     # image_shape = (3, imgsz, imgsz)
     data_shape = (batch_size,) + image_shape
     
     for i in range(repeat):
+        dataset_s_time = time.time()
         img = np.random.uniform(-1, 1 , size=data_shape).astype("float32")
+        d_load_time = time.time()-dataset_s_time
 
         if i==0:
             for w in range(warm_up):
@@ -48,8 +50,12 @@ def trt_predict_benchmark(precision, batch_size,imgsz, display_every=100, warm_u
                 
         start_time = time.time()
         trt_results = model_trt(x=img);
-        iter_times.append(time.time() - start_time)
-        
+        inference_time=time.time() - start_time
+
+        if i ==0:
+            first_iter_time = inference_time
+        else:
+            iter_times.append(inference_time)
         # actual_labels.extend(label for label_list in labels.numpy() for label in label_list)
         
         # print(trt_results)
@@ -66,17 +72,14 @@ def trt_predict_benchmark(precision, batch_size,imgsz, display_every=100, warm_u
     results.loc['instance_type']           = [requests.get('http://169.254.169.254/latest/meta-data/instance-type').text]
     results.loc['user_batch_size']         = [batch_size]
     # results.loc['accuracy']                = [acc_trt]
-    results.loc['prediction_time']         = [np.sum(iter_times)]
-    results.loc['wall_time']               = [time.time() - walltime_start]   
-    results.loc['images_per_sec_mean']     = [np.mean(batch_size / iter_times)]
-    results.loc['images_per_sec_std']      = [np.std(batch_size / iter_times, ddof=1)]
-    results.loc['latency_mean']            = [np.mean(iter_times) * 1000]
-    results.loc['latency_99th_percentile'] = [np.percentile(iter_times, q=99, interpolation="lower") * 1000]
-    results.loc['latency_median']          = [np.median(iter_times) * 1000]
-    results.loc['latency_min']             = [np.min(iter_times) * 1000]
-    results.loc['first_batch']             = [iter_times[0]]
-    results.loc['next_batches_mean']       = [np.mean(iter_times[1:])]
-    print(results.T)
+    results.loc['total_inference_time']     = [np.sum(iter_times)*1000]
+    results.loc['first_inference_time']     = [first_iter_time * 1000]
+    results.loc['next_inference_time_mean'] = [np.median(iter_times[1:]) * 1000]
+    results.loc['next_inference_time_mean'] = [np.mean(iter_times[1:]) * 1000]
+    results.loc['images_per_sec_mean']      = [np.mean(batch_size / iter_times)]
+    results.loc['model_load_time']          = [load_time*1000]
+    results.loc['dataset_load_time']        = [d_load_time*1000]
+    results.loc['wall_time']                = [(time.time() - walltime_start)*1000]
    
     return results, iter_times
 
