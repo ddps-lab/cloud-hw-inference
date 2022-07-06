@@ -64,4 +64,4 @@ for compiled_batch in compiled_batch_sizes:
         print(results)    
         result_list = pd.concat([result_list, results], axis = 1)
     print(result_list)
-    result.to_csv(f'{model_type}_{compiled_batch}_batch_size_{batch_size}.csv')
+    result_list.to_csv(f'{model_type}_{compiled_batch}_batch_size_{batch_size}.csv')
