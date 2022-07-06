@@ -1,7 +1,6 @@
 import shutil
 import numpy as np
 import argparse
-from random import randint
 
 import tensorflow as tf
 from functools import partial
@@ -9,19 +8,6 @@ from functools import partial
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0" # To adapt!
 print(f"TensorFlow version: {tf.__version__}")
-
-import argparse
-
-results = None
-parser = argparse.ArgumentParser()
-parser.add_argument('--model',default='yolov5',type=str)
-parser.add_argument('--batchsize',default=1 , type=int)
-parser.add_argument('--precision',default='fp32', type=str)
-args = parser.parse_args()
-model = args.model 
-batch_size = args.batchsize
-precision = args.precision
-
 
 ####tensorRT compile
 
@@ -60,16 +46,32 @@ def build_tensorrt_engine(model,precision, batch_size, imgsz):
     return trt_compiled_model_dir
 
 
-saved_model_dir = "yolov5s_saved_model"
-batchsize=1
-imgsz = 640
-# model = tf.keras.models.load_model(f"{saved_model_dir}")
-# inference_func = model.signatures["serving_default"]
 
-trt_compiled_model_dir = build_tensorrt_engine(saved_model_dir,precision, batch_size, imgsz)
 
-print("================================================")
-print(trt_compiled_model_dir)
-print("================================================")
+if __name__ == "__main__":
 
+    import argparse
+
+    results = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model',default='yolov5s',type=str)
+    parser.add_argument('--batchsize',default=64 , type=int)
+    parser.add_argument('--imgsize',default=640, type=int)
+    parser.add_argument('--precision',default='fp32', type=str)
+    args = parser.parse_args()
+    model = args.model 
+    batch_size = args.batchsize
+    precision = args.precision
+
+    saved_model_dir = f"{model}_saved_model"
+    batchsize=1
+    imgsz = 640
+    # model = tf.keras.models.load_model(f"{saved_model_dir}")
+    # inference_func = model.signatures["serving_default"]
+
+    trt_compiled_model_dir = build_tensorrt_engine(saved_model_dir,precision, batch_size, imgsz)
+
+    print("================================================")
+    print(trt_compiled_model_dir)
+    print("================================================")
 
