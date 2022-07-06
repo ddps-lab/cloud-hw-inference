@@ -40,10 +40,8 @@ for compiled_batch in compiled_batch_sizes:
         dtype = "int32"
         inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
         for i in range(10):
-            start = time.time()
+            start_time = time.time()
             outputs = loaded_model(inputs)
-            end = time.time()
-            neuron_b128_times.append(end - start)
             
             if counter ==0:
                 first_iter_time = time.time() - start_time
