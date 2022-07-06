@@ -20,21 +20,19 @@ saved_model_dir = f'{model_type}_saved_model'
 batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 
-for compiled_batch in compiled_batch_sizes:
+for batch_size in batch_sizes:
     iter_ds = pd.DataFrame()
     results = pd.DataFrame()
     walltime_start = time.time()
-    
-    compiled_model_dir = f'{model_type}_batch_{compiled_batch}_inf1'
-    inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
-
-    load_start = time.time()
-    loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
-    load_time = time.time() - load_start
-    
-    
     result_list = pd.DataFrame()
-    for batch_size in batch_sizes:
+    for compiled_batch in compiled_batch_sizes:
+        compiled_model_dir = f'{model_type}_batch_{compiled_batch}_inf1'
+        inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+
+        load_start = time.time()
+        loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
+        load_time = time.time() - load_start
+        
         first_iter_time = 0
         counter = 0
         iter_times = []
@@ -64,4 +62,4 @@ for compiled_batch in compiled_batch_sizes:
         print(results)    
         result_list = pd.concat([result_list, results], axis = 1)
     print(result_list)
-    result_list.to_csv(f'{model_type}_{compiled_batch}_batch_size_{batch_size}.csv')
+    result_list.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
