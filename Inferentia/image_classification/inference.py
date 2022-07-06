@@ -148,7 +148,8 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     results.loc['batch_size']              = [batch_size]
     results.loc['accuracy']                = [acc_inf1]
     results.loc['first_prediction_time']   = [first_iter_time]
-    results.loc['average_prediction_time'] = [np.mean(iter_times)]
+    results.loc['next_inference_time_mean'] = [np.mean(iter_times)]
+    results.loc['next_inference_time_median'] = [np.median(iter_times)]
     results.loc['load_time']               = [load_time]
     results.loc['wall_time']               = [time.time() - walltime_start]
 
