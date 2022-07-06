@@ -19,29 +19,47 @@ saved_model_dir = f'{model_type}_saved_model'
 batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 for compiled_batch in compiled_batch_sizes:
+    iter_ds = pd.DataFrame()
+    results = pd.DataFrame()
+    
     compiled_model_dir = f'{model_type}_batch_{compiled_batch}_inf1'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+
+    load_start = time.time()
     loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
+    load_time = time.time() - load_start
+    
+    first_iter_time = 0
+    iter_times = []
+    
+    counter = 0
+    result_list = pd.DataFrame()
     for batch_size in batch_sizes:
-        neuron_b128_times = []
         seq_length = 128
         dtype = "int32"
         inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
-        for i in range(1000):
+        for i in range(10):
             start = time.time()
             outputs = loaded_model(inputs)
             end = time.time()
             neuron_b128_times.append(end - start)
-
-        neuron_b128_times = sorted(neuron_b128_times)
-
-        print(f"Average throughput for batch 128 neuron model is {128/(sum(neuron_b128_times)/len(neuron_b128_times))} sentences/s.")
-        print(f"Peak throughput for batch 128 neuron model is {128/min(neuron_b128_times)} sentences/s.")
-        print()
-
-
-        print(f"50th percentile latency for batch 128 neuron model is {neuron_b128_times[int(1000*.5)] * 1000} ms.")
-        print(f"90th percentile latency for batch 128 neuron model is {neuron_b128_times[int(1000*.9)] * 1000} ms.")
-        print(f"95th percentile latency for bacth 128 neuron model is {neuron_b128_times[int(1000*.95)] * 1000} ms.")
-        print(f"99th percentile latency for batch 128 neuron model is {neuron_b128_times[int(1000*.99)] * 1000} ms.")
-        print()
+            
+            if counter ==0:
+                first_iter_time = time.time() - start_time
+            else:
+                iter_times.append(time.time() - start_time)
+                
+            counter+=1
+            
+        iter_times = np.array(iter_times)
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
+        results.loc['batch_size']              = [batch_size]
+        results.loc['accuracy']                = [0]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+        results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+        results.loc['load_time']               = [load_time * 1000]
+        results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
+        
+    result_list = pd.concat([result_list, results], axis = 1)
+    
