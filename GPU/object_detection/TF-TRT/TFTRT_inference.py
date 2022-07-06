@@ -10,23 +10,6 @@ from tensorflow.python.saved_model import tag_constants, signature_constants
 
 print(f"TensorFlow version: {tf.__version__}")
 
-
-results = None
-parser = argparse.ArgumentParser()
-parser.add_argument('--model',default='resnet50',type=str)
-parser.add_argument('--batchsize',default=1 , type=int)
-parser.add_argument('--precision',default='fp32', type=str)
-parser.add_argument('--size',default=224,type=int)
-args = parser.parse_args()
-model = args.model 
-batch_size = args.batchsize
-model_batchsize=args.load_batchsize
-precision = args.precision
-size=args.size
-
-
-
-
 def trt_predict_benchmark(precision, batch_size,imgsz, display_every=100, warm_up=10,repeat=10):
 
     print('\n=======================================================')
@@ -36,7 +19,7 @@ def trt_predict_benchmark(precision, batch_size,imgsz, display_every=100, warm_u
    
     # LOAD 만 해서 inference 진행
     model_name="yolov5s"
-    trt_compiled_model_dir = f'{model_name}_saved_model_trt_saved_models/{model_name}_saved_model_fp32_1'
+    trt_compiled_model_dir = f'{model_name}_saved_model_trt_saved_models/{model_name}_saved_model_fp32_64'
     # trt_compiled_model_dir = build_tensorrt_engine(precision, batch_size, dataset)
 
     walltime_start = time.time()
@@ -98,11 +81,35 @@ def trt_predict_benchmark(precision, batch_size,imgsz, display_every=100, warm_u
     return results, iter_times
 
 
-if results is None:
-    results = pd.DataFrame()
+if __name__ == "__main__":
 
-imgsz = 640
-res, it = trt_predict_benchmark(precision, batch_size,imgsz)
-results = res
+    import argparse
 
-print(results)
+    results = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model',default='yolov5s',type=str)
+    parser.add_argument('--batch_list',default=[1,2,4,8,16,32,64], type=list)
+    parser.add_argument('--imgsize',default=640, type=int)
+    parser.add_argument('--precision',default='fp32', type=str)
+    args = parser.parse_args()
+    model = args.model 
+    batch_list = args.batch_list
+    precision = args.precision
+    imgsize = args.imgsize
+
+    if results is None:
+        results = pd.DataFrame()
+
+
+    for batch_size in batch_list:
+        opt = {'batch_size': batch_size}
+        iter_ds = pd.DataFrame()
+        
+        print(f'{model}-{batch_size} start')
+        
+        res, it = trt_predict_benchmark(precision, batch_size,imgsize)
+        # results = res        
+        results = pd.concat([results, res], axis=1)
+        print(results)
+    results.to_csv(f'{model}_{batch_size}.csv')
+
