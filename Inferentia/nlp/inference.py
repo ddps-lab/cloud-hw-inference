@@ -61,6 +61,6 @@ for compiled_batch in compiled_batch_sizes:
     results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
     results.loc['load_time']               = [load_time * 1000]
     results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
-        
+    print(results)    
 result_list = pd.concat([result_list, results], axis = 1)
-    
+print(result_list)
