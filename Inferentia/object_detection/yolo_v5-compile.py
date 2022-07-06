@@ -1,12 +1,12 @@
 import sys
-get_ipython().system('{sys.executable} -m pip install pillow matplotlib pycocotools==2.0.2 --force --extra-index-url=https://pip.repos.neuron.amazonaws.com')
+# get_ipython().system('{sys.executable} -m pip install pillow matplotlib pycocotools==2.0.2 --force --extra-index-url=https://pip.repos.neuron.amazonaws.com')
 
-get_ipython().system('curl -LO http://images.cocodataset.org/zips/val2017.zip')
-get_ipython().system('curl -LO http://images.cocodataset.org/annotations/annotations_trainval2017.zip')
-get_ipython().system('unzip -q val2017.zip')
-get_ipython().system('unzip annotations_trainval2017.zip')
+# get_ipython().system('curl -LO http://images.cocodataset.org/zips/val2017.zip')
+# get_ipython().system('curl -LO http://images.cocodataset.org/annotations/annotations_trainval2017.zip')
+# get_ipython().system('unzip -q val2017.zip')
+# get_ipython().system('unzip annotations_trainval2017.zip')
 
-get_ipython().system('ls')
+# get_ipython().system('ls')
 
 import json
 import tensorflow as tf
