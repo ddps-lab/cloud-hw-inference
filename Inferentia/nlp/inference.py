@@ -10,6 +10,7 @@ import shutil
 import json
 import numpy as np
 import time
+import pandas as pd
 
 model_name = model_type = 'bert-base-uncased'
 inf1_model_dir = f'{model_type}_inf1_saved_models'
