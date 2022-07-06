@@ -147,11 +147,11 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
     results.loc['batch_size']              = [batch_size]
     results.loc['accuracy']                = [acc_inf1]
-    results.loc['first_prediction_time']   = [first_iter_time]
-    results.loc['next_inference_time_mean'] = [np.mean(iter_times)]
-    results.loc['next_inference_time_median'] = [np.median(iter_times)]
-    results.loc['load_time']               = [load_time]
-    results.loc['wall_time']               = [time.time() - walltime_start]
+    results.loc['first_prediction_time']   = [first_iter_time * 1000]
+    results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+    results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+    results.loc['load_time']               = [load_time * 1000]
+    results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
 
     return results, iter_times
   
