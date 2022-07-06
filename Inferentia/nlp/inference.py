@@ -32,11 +32,11 @@ for compiled_batch in compiled_batch_sizes:
     loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
     load_time = time.time() - load_start
     
-    first_iter_time = 0
     
-    counter = 0
     result_list = pd.DataFrame()
     for batch_size in batch_sizes:
+        first_iter_time = 0
+        counter = 0
         iter_times = []
         seq_length = 128
         dtype = "int32"
@@ -53,7 +53,7 @@ for compiled_batch in compiled_batch_sizes:
             counter+=1
             
         iter_times = np.array(iter_times)
-        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{compiled_batch}'])
         results.loc['batch_size']              = [batch_size]
         results.loc['accuracy']                = [0]
         results.loc['first_prediction_time']   = [first_iter_time * 1000]
