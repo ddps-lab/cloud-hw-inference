@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--batch_list',
                       nargs='+',
                       required=True)
-batch_size = parser.parse_args().batch_list
+batch_sizes = parser.parse_args().batch_list
 
 
 #benchmark batch 128 neuron model
