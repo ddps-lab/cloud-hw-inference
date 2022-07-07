@@ -29,6 +29,7 @@ batch_sizes = parser.parse_args().batch_list
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 
 for batch_size in batch_sizes:
+    batch_size = int(batch_size)
     iter_ds = pd.DataFrame()
     results = pd.DataFrame()
     walltime_start = time.time()
