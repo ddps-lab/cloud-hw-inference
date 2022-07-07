@@ -11,11 +11,13 @@ import json
 import numpy as np
 import time
 import pandas as pd
+import argparse
 
 model_name = model_type = 'bert-base-uncased'
 inf1_model_dir = f'{model_type}_inf1_saved_models'
 saved_model_dir = f'{model_type}_saved_model'
 
+parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--batch_list',
                       nargs='+',
                       required=True)
