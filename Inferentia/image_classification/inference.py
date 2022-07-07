@@ -89,7 +89,9 @@ def val_preprocessing(record):
     return image, label
 
 def get_dataset(batch_size, use_cache=False):
-    files = tf.io.gfile.glob(os.path.join(data_dir))
+#     files = tf.io.gfile.glob(os.path.join(data_dir))
+    files = tf.io.read_file(data_dir)
+    
     dataset = tf.data.TFRecordDataset(files)
     print('files',dataset)
     dataset = dataset.map(map_func=val_preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
