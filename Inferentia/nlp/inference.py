@@ -16,8 +16,14 @@ model_name = model_type = 'bert-base-uncased'
 inf1_model_dir = f'{model_type}_inf1_saved_models'
 saved_model_dir = f'{model_type}_saved_model'
 
+parser.add_argument('-l', '--batch_list',
+                      nargs='+',
+                      required=True)
+batch_size = parser.parse_args().batch_list
+
+
 #benchmark batch 128 neuron model
-batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+# batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 
 for batch_size in batch_sizes:
