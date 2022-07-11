@@ -108,7 +108,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     model_inf1 = load_model(neuron_saved_model_name)
     load_time = time.time() - load_start
     
-    inference_function = model_inf1.signatures['serving_default']
+    inference_function = model_inf1
     walltime_start = time.time()
     first_iter_time = 0
     iter_times = []
