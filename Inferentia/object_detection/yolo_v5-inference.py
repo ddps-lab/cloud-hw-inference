@@ -149,7 +149,7 @@ user_batchs = [1, 2, 4, 8, 16, 32, 64]
 inf1_model_dir = f'{model_type}_inf1_saved_models'
 for user_batch in user_batchs:
     iter_ds = pd.DataFrame()
-    results = pd.DataFrame()
+    result_list = pd.DataFrame()
     for eval_batch_size in batch_list:
         walltime_start = time.time()
         opt ={'batch_size': eval_batch_size}
@@ -191,8 +191,7 @@ for user_batch in user_batchs:
         results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
 
         iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-        results = pd.concat([results, res], axis=1)
-    results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
-    print(results)
-print(results)
+        result_list = pd.concat([result_list, results], axis = 1)
+    result_list.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+    print(result_list)
 
