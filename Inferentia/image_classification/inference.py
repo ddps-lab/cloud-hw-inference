@@ -139,11 +139,12 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
             display_threshold+=display_every
 
         counter+=1
-
+        
     iter_times = np.array(iter_times)
     print('actual',actual_labels)
     print(pred_labels)
-    acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
+#     acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
+    acc_inf1 = 0
     results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
     results.loc['batch_size']              = [batch_size]
     results.loc['accuracy']                = [acc_inf1]
