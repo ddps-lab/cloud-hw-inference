@@ -84,13 +84,11 @@ def val_preprocessing(record):
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
     
     image = models[model_type].preprocess_input(image)
-    print('image',image)
-    print('label',label)
     return image, label
 
 def get_dataset(batch_size, use_cache=False):
     files = tf.io.gfile.glob(os.path.join(data_dir))
-    dataset = tf.data.TFRecordDataset(files)
+    dataset = tf.data.TFRecordDataset(data_dir)
     print('files',dataset)
     dataset = dataset.map(map_func=val_preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(batch_size=batch_size)
@@ -101,12 +99,14 @@ def get_dataset(batch_size, use_cache=False):
   
 import os
     
-def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, user_batch_size, num_cores, use_cache=False, warm_up=10):
+def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, user_batch_size, use_cache=False, warm_up=10):
     print(f'Running model {neuron_saved_model_name}, user_batch_size: {user_batch_size}\n')
 
+    load_start = time.time()
     model_inf1 = load_model(neuron_saved_model_name)
+    load_time = time.time() - load_start
     
-    inference_function = model_inf1.signatures['serving_default']
+    inference_function = model_inf1
     walltime_start = time.time()
     first_iter_time = 0
     iter_times = []
@@ -117,14 +117,9 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     display_threshold = display_every
     
     ds = get_dataset(user_batch_size, use_cache)
-    load_start = time.time()
-    load_time = time.time() - load_start
     counter = 0
-    print(model_inf1)
     
     for batch, batch_labels in ds:
-        print('batch',batch)
-        print(batch_labels)
         start_time = time.time()
         yhat_np = inference_function(batch)
         if counter ==0:
@@ -139,18 +134,17 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
             display_threshold+=display_every
 
         counter+=1
-
+        
     iter_times = np.array(iter_times)
-    print('actual',actual_labels)
-    print(pred_labels)
     acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
     results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
     results.loc['batch_size']              = [batch_size]
     results.loc['accuracy']                = [acc_inf1]
-    results.loc['first_prediction_time']   = [first_iter_time]
-    results.loc['average_prediction_time'] = [np.mean(iter_times)]
-    results.loc['load_time']               = [load_time]
-    results.loc['wall_time']               = [time.time() - walltime_start]
+    results.loc['first_prediction_time']   = [first_iter_time * 1000]
+    results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+    results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+    results.loc['load_time']               = [load_time * 1000]
+    results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
 
     return results, iter_times
   
@@ -162,29 +156,26 @@ for model_type in model_types:
     _ = models[model_type].preprocess_input(temp)
 
     # testing batch size
-    batch_list = [1]
-    num_of_cores = [1]
-    user_batchs = [1]
+    batch_list = [1, 2, 4, 8, 16, 32, 64]
+    user_batchs = [1, 2, 4, 8, 16, 32, 64]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
 
     for user_batch in user_batchs:
         iter_ds = pd.DataFrame()
         results = pd.DataFrame()
         for batch_size in batch_list:
-            for num_cores in num_of_cores:
-                opt ={'batch_size': batch_size, 'num_cores': num_of_cores}
-                compiled_model_dir = f'{model_type}_batch_{batch_size}_inf1_cores_{num_cores}'
-                inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+            opt ={'batch_size': batch_size}
+            compiled_model_dir = f'{model_type}_batch_{batch_size}'
+            inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
-                print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-                col_name = lambda opt: f'inf1_{batch_size}_multicores_{num_cores}'
+            print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
+            col_name = lambda opt: f'inf1_{batch_size}'
 
-                res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
-                                                                                 batch_size = batch_size,
-                                                                                 user_batch_size = batch_size*user_batch,
-                                                                                 num_cores = num_cores,
-                                                                                 use_cache=False, 
-                                                                                 warm_up=10)
+            res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
+                                                                             batch_size = batch_size,
+                                                                             user_batch_size = batch_size*user_batch,
+                                                                             use_cache=False, 
+                                                                             warm_up=10)
 
             iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
             results = pd.concat([results, res], axis=1)

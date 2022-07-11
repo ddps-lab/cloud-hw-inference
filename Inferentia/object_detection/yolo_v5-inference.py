@@ -1,42 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Evaluate YOLO v3 on Inferentia
-# ## Note: this tutorial runs on tensorflow-neuron 1.x only
-
-# ## Introduction
-# This tutorial walks through compiling and evaluating YOLO v3 model on Inferentia using the AWS Neuron SDK.
-# 
-# 
-# In this tutorial we provide two main sections:
-# 
-# 1. Download Dataset and Generate Pretrained SavedModel
-# 
-# 2. Compile the YOLO v3 model.
-# 
-# 3. Deploy the same compiled model.
-# 
-# Before running the following verify this Jupyter notebook is running “conda_aws_neuron_tensorflow_p36” kernel. You can select the Kernel from the “Kernel -> Change Kernel” option on the top of this Jupyter notebook page.
-# 
-# Instructions of how to setup Neuron Tensorflow environment and run the tutorial as a Jupyter notebook are available in the Tutorial main page [Tensorflow-YOLO_v3 Tutorial](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/neuron-guide/neuron-frameworks/tensorflow-neuron/tutorials/yolo_v3_demo/yolo_v3_demo.html)
-
-# ## Prerequisites
-# 
-
-# This demo requires the following pip packages:
-# 
-# `pillow matplotlib pycocotools`
-# 
-
-# ## Deploy the model on Inferentia
-# ## Part 3:Evaluate Model Quality after Compilation
-# 
-# ### Define evaluation functions
-# We first define some handy helper functions for running evaluation on the COCO 2017 dataset.
-
-# In[1]:
-
-
 import os
 import json
 import time
@@ -147,42 +108,11 @@ def analyze_bbox(results, batch_im_id, _clsid2catid):
 
 
 # Here is the actual evaluation loop. To fully utilize all four cores on one Inferentia, the optimal setup is to run multi-threaded inference using a `ThreadPoolExecutor`. The following cell is a multi-threaded adaptation of the evaluation routine at https://github.com/miemie2013/Keras-YOLOv4/blob/910c4c6f7265f5828fceed0f784496a0b46516bf/tools/cocotools.py#L97.
-
-# In[2]:
-
-
 from concurrent import futures
 
 def evaluate(yolo_predictor, images, eval_pre_path, anno_file, eval_batch_size, _clsid2catid, user_batch_size, num_cores):
     batch_im_id_list, batch_im_name_list, batch_img_bytes_list = get_image_as_bytes(images, eval_pre_path, user_batch_size)
     walltime_start = time.time()
-    # warm up
-#     yolo_predictor({'image': np.array(batch_img_bytes_list[0], dtype=object)})
-
-#     with futures.ThreadPoolExecutor(4) as exe:
-#         fut_im_list = []
-#         fut_list = []
-#         start_time = time.time()
-#         for batch_im_id, batch_im_name, batch_img_bytes in zip(batch_im_id_list, batch_im_name_list, batch_img_bytes_list):
-#             if len(batch_img_bytes) != eval_batch_size:
-#                 continue
-#             fut = exe.submit(yolo_predictor, {'image': np.array(batch_img_bytes, dtype=object)})
-#             fut_im_list.append((batch_im_id, batch_im_name))
-#             fut_list.append(fut)
-#         bbox_list = []
-#         count = 0
-#         for (batch_im_id, batch_im_name), fut in zip(fut_im_list, fut_list):
-#             results = fut.result()
-#             bbox_list.extend(analyze_bbox(results, batch_im_id, _clsid2catid))
-#             for _ in batch_im_id:
-#                 count += 1
-#                 if count % 100 == 0:
-#                     print('Test iter {}'.format(count))
-#         print('==================== Performance Measurement ====================')
-#         print('Finished inference on {} images in {} seconds'.format(len(images), time.time() - start_time))
-#         print('=================================================================')
-#     # start evaluation
-#     box_ap_stats = bbox_eval(anno_file, bbox_list)
     iter_times = []
     counter = 0
     first_iter_time = 0
@@ -224,12 +154,6 @@ def evaluate(yolo_predictor, images, eval_pre_path, anno_file, eval_batch_size, 
     return box_ap_stats, results, iter_times
 
 
-# ### Evaluate mean average precision (mAP) score
-# Here is the code to calculate mAP scores of the YOLO v3 model. The expected mAP score is around 0.328 if we use the pretrained weights.
-
-# In[32]:
-
-
 import glob
 from PIL import Image
 
@@ -264,47 +188,49 @@ clsid2catid = {0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 
 
 model_type = 'yolo_v5_coco'
 
-batch_list = [1]
-num_of_cores = [1]
-user_batchs = [1]
+batch_list = [1, 2, 4, 8, 16, 32, 64]
+user_batchs = [1, 2, 4, 8, 16, 32, 64]
 inf1_model_dir = f'{model_type}_inf1_saved_models'
 for user_batch in user_batchs:
     iter_ds = pd.DataFrame()
     results = pd.DataFrame()
     for eval_batch_size in batch_list:
-        for num_cores in num_of_cores:
-            opt ={'batch_size': eval_batch_size, 'num_cores': num_of_cores}
-#             compiled_model_dir = f'{model_type}_batch_{eval_batch_size}_inf1_cores_{num_cores}'
-#             inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
-            inf1_compiled_model_dir = inf1_model_dir
-            print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-            col_name = lambda opt: f'inf1_{eval_batch_size}_multicores_{num_cores}'
+        opt ={'batch_size': eval_batch_size, 'num_cores': num_of_cores}
+        compiled_model_dir = f'{model_type}_batch_{eval_batch_size}'
+        inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+        print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
+        col_name = lambda opt: f'inf1_{eval_batch_size}_multicores_{num_cores}'
 
-            with open(val_annotate, 'r', encoding='utf-8') as f2:
-                for line in f2:
-                    line = line.strip()
-                    dataset = json.loads(line)
-                    images = dataset['images']
-            start_time = time.time()
-            yolo_pred = load_model(inf1_compiled_model_dir)
-            load_time = time.time() - start_time
-            iter_times = []
-            
-            image_list = glob.glob(val_coco_root + '/*')
-            for image in image_list:
-                image = filenames_to_input([image])
+        with open(val_annotate, 'r', encoding='utf-8') as f2:
+            for line in f2:
+                line = line.strip()
+                dataset = json.loads(line)
+                images = dataset['images']
+        start_time = time.time()
+        yolo_pred = load_model(inf1_compiled_model_dir)
+        load_time = time.time() - start_time
+        iter_times = []
+
+        image_list = glob.glob(val_coco_root + '/*')
+        img = []
+        for image in image_list:
+            img.append(image)
+            if len(img) == eval_batch_size:
+                inf_image = filenames_to_input(img)
                 start_time = time.time()
-                res = yolo_pred(image)
+                res = yolo_pred(inf_image)
                 iter_times.append(time.time() - start_time)
-                break
-            
-            iter_times = np.array(iter_times)
-            
-            results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{1}'])
-#             results.loc['batch_size']              = [batch_size]
-#             results.loc['first_prediction_time']   = [first_iter_time]
-            results.loc['average_prediction_time'] = [np.mean(iter_times)]
-            results.loc['load_time']               = [load_time]
+                img = []
+
+        iter_times = np.array(iter_times)
+
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{1}'])
+        results.loc['batch_size']              = [eval_batch_size]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+        results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+        results.loc['load_time']               = [load_time * 1000]
+        results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
 #             box_ap, res, iter_times = evaluate(yolo_pred,
 #                                                images,
 #                                                val_coco_root,
@@ -314,14 +240,9 @@ for user_batch in user_batchs:
 #                                                eval_batch_size * user_batch, 
 #                                                num_cores)
 
-#         iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-#         results = pd.concat([results, res], axis=1)
-#     display(results)
+        iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+        results = pd.concat([results, res], axis=1)
+    results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+    display(results)
 print(results)
-
-
-# In[ ]:
-
-
-
 

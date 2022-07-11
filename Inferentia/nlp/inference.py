@@ -1,90 +1,74 @@
-from transformers import pipeline
 import tensorflow as tf
 import tensorflow.neuron as tfn
 import warnings
 import time
+from transformers import TFBertForSequenceClassification, BertTokenizer
+import tensorflow as tf
+import tensorflow.neuron as tfn
+import os
+import shutil
+import json
+import numpy as np
+import time
+import pandas as pd
+import argparse
 
-class TFBertForSequenceClassificationDictIO(tf.keras.Model):
-    def __init__(self, model_wrapped):
-        super().__init__()
-        self.model_wrapped = model_wrapped
-        self.aws_neuron_function = model_wrapped.aws_neuron_function
-    def call(self, inputs):
-        input_ids = inputs['input_ids']
-        attention_mask = inputs['attention_mask']
-        logits = self.model_wrapped([input_ids, attention_mask])
-        return [logits]
+model_name = model_type = 'bert-base-uncased'
+inf1_model_dir = f'{model_type}_inf1_saved_models'
+saved_model_dir = f'{model_type}_saved_model'
 
-
-loaded_model = tf.keras.models.load_model('./distilbert_b128')
-rewrapped_model = TFBertForSequenceClassificationDictIO(loaded_model)
-
-model_name = 'distilbert-base-uncased-finetuned-sst-2-english'
-
-neuron_pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
-pipe = pipeline('sentiment-analysis', model=model_name, framework='tf')
-
-#the first step is to modify the underlying tokenizer to create a static
-#input shape as inferentia does not work with dynamic input shapes
-original_tokenizer = pipe.tokenizer
+parser = argparse.ArgumentParser()
+parser.add_argument('-l', '--batch_list',
+                      nargs='+',
+                      required=True)
+batch_sizes = parser.parse_args().batch_list
 
 
-#you intercept the function call to the original tokenizer
-#and inject our own code to modify the arguments
-def wrapper_function(*args, **kwargs):
-    kwargs['padding'] = 'max_length'
-    #this is the key line here to set a static input shape
-    #so that all inputs are set to a len of 128
-    kwargs['max_length'] = 128
-    kwargs['truncation'] = True
-    kwargs['return_tensors'] = 'tf'
-    return original_tokenizer(*args, **kwargs)
-
-#insert our wrapper function as the new tokenizer as well
-#as reinserting back some attribute information that was lost
-#when you replaced the original tokenizer with our wrapper function
-neuron_pipe.tokenizer = wrapper_function
-neuron_pipe.tokenizer.decode = original_tokenizer.decode
-neuron_pipe.tokenizer.mask_token_id = original_tokenizer.mask_token_id
-neuron_pipe.tokenizer.pad_token_id = original_tokenizer.pad_token_id
-neuron_pipe.tokenizer.convert_ids_to_tokens = original_tokenizer.convert_ids_to_tokens
-#now you can reinsert our reloaded model back into our pipeline
-neuron_pipe.model = rewrapped_model
-neuron_pipe.model.config = pipe.model.config
-
-
-warnings.warn("NEURONCORE_GROUP_SIZES is being deprecated, if your application is using NEURONCORE_GROUP_SIZES please \
-see https://awsdocs-neuron.readthedocs-hosted.com/en/latest/release-notes/deprecation.html#announcing-end-of-support-for-neuroncore-group-sizes \
-for more details.", DeprecationWarning)
-
-
-string_inputs = [
-    'I love to eat pizza!',
-    'I am sorry. I really want to like it, but I just can not stand sushi.',
-    'I really do not want to type out 128 strings to create batch 128 data.',
-    'Ah! Multiplying this list by 32 would be a great solution!',
-]
-string_inputs = string_inputs * 32
-
-#warmup inf
-neuron_pipe(string_inputs)
 #benchmark batch 128 neuron model
-neuron_b128_times = []
-for i in range(1000):
-    start = time.time()
-    outputs = neuron_pipe(string_inputs)
-    end = time.time()
-    neuron_b128_times.append(end - start)
+# batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
 
-neuron_b128_times = sorted(neuron_b128_times)
+for batch_size in batch_sizes:
+    batch_size = int(batch_size)
+    iter_ds = pd.DataFrame()
+    results = pd.DataFrame()
+    walltime_start = time.time()
+    result_list = pd.DataFrame()
+    for compiled_batch in compiled_batch_sizes:
+        compiled_model_dir = f'{model_type}_batch_{compiled_batch}_inf1'
+        inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
-print(f"Average throughput for batch 128 neuron model is {128/(sum(neuron_b128_times)/len(neuron_b128_times))} sentences/s.")
-print(f"Peak throughput for batch 128 neuron model is {128/min(neuron_b128_times)} sentences/s.")
-print()
-
-
-print(f"50th percentile latency for batch 128 neuron model is {neuron_b128_times[int(1000*.5)] * 1000} ms.")
-print(f"90th percentile latency for batch 128 neuron model is {neuron_b128_times[int(1000*.9)] * 1000} ms.")
-print(f"95th percentile latency for bacth 128 neuron model is {neuron_b128_times[int(1000*.95)] * 1000} ms.")
-print(f"99th percentile latency for batch 128 neuron model is {neuron_b128_times[int(1000*.99)] * 1000} ms.")
-print()
+        load_start = time.time()
+        loaded_model = tf.keras.models.load_model(inf1_compiled_model_dir)
+        load_time = time.time() - load_start
+        
+        first_iter_time = 0
+        counter = 0
+        iter_times = []
+        seq_length = 128
+        dtype = "int32"
+        inputs = np.random.randint(0, 2000, size=(batch_size, seq_length)).astype(dtype)
+        for i in range(10):
+            start_time = time.time()
+            outputs = loaded_model(inputs)
+            
+            if counter ==0:
+                first_iter_time = time.time() - start_time
+            else:
+                iter_times.append(time.time() - start_time)
+                
+            counter+=1
+            
+        iter_times = np.array(iter_times)
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{compiled_batch}'])
+        results.loc['batch_size']              = [batch_size]
+        results.loc['accuracy']                = [0]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+        results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+        results.loc['load_time']               = [load_time * 1000]
+        results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
+        print(results)    
+        result_list = pd.concat([result_list, results], axis = 1)
+    print(result_list)
+    result_list.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
