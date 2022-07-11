@@ -196,9 +196,8 @@ for user_batch in user_batchs:
     results = pd.DataFrame()
     for eval_batch_size in batch_list:
         opt ={'batch_size': eval_batch_size, 'num_cores': num_of_cores}
-#             compiled_model_dir = f'{model_type}_batch_{eval_batch_size}_inf1_cores_{num_cores}'
-#             inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
-        inf1_compiled_model_dir = inf1_model_dir
+        compiled_model_dir = f'{model_type}_batch_{eval_batch_size}'
+        inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
         print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
         col_name = lambda opt: f'inf1_{eval_batch_size}_multicores_{num_cores}'
 
@@ -213,20 +212,25 @@ for user_batch in user_batchs:
         iter_times = []
 
         image_list = glob.glob(val_coco_root + '/*')
+        img = []
         for image in image_list:
-            image = filenames_to_input([image])
-            start_time = time.time()
-            res = yolo_pred(image)
-            iter_times.append(time.time() - start_time)
-            break
+            img.append(image)
+            if len(img) == eval_batch_size:
+                inf_image = filenames_to_input(img)
+                start_time = time.time()
+                res = yolo_pred(inf_image)
+                iter_times.append(time.time() - start_time)
+                img = []
 
         iter_times = np.array(iter_times)
 
         results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{1}'])
-#             results.loc['batch_size']              = [batch_size]
-#             results.loc['first_prediction_time']   = [first_iter_time]
-        results.loc['average_prediction_time'] = [np.mean(iter_times)]
-        results.loc['load_time']               = [load_time]
+        results.loc['batch_size']              = [eval_batch_size]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+        results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+        results.loc['load_time']               = [load_time * 1000]
+        results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
 #             box_ap, res, iter_times = evaluate(yolo_pred,
 #                                                images,
 #                                                val_coco_root,
@@ -236,8 +240,9 @@ for user_batch in user_batchs:
 #                                                eval_batch_size * user_batch, 
 #                                                num_cores)
 
-#         iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-#         results = pd.concat([results, res], axis=1)
-#     display(results)
+        iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+        results = pd.concat([results, res], axis=1)
+    results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+    display(results)
 print(results)
 
