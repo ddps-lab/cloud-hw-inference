@@ -172,7 +172,7 @@ for user_batch in user_batchs:
         img = []
         for image in image_list:
             img.append(image)
-            if len(img) == eval_batch_size:
+            if len(img) == user_batch_size * eval_batch_size:
                 inf_image = filenames_to_input(img)
                 start_time = time.time()
                 res = yolo_pred(inf_image)
@@ -182,7 +182,7 @@ for user_batch in user_batchs:
         first_iter_time = iter_times[0]
         iter_times = np.array(iter_times[1:])
 
-        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{1}'])
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{user_batch}'])
         results.loc['batch_size']              = [eval_batch_size]
         results.loc['first_prediction_time']   = [first_iter_time * 1000]
         results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
@@ -192,6 +192,6 @@ for user_batch in user_batchs:
 
         iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
         result_list = pd.concat([result_list, results], axis = 1)
-    result_list.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+    result_list.to_csv(f'{model_type}_batch_size_{user_batch}.csv')
     print(result_list)
 
