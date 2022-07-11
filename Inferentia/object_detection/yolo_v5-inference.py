@@ -177,8 +177,9 @@ for user_batch in user_batchs:
                 res = yolo_pred(inf_image)
                 iter_times.append(time.time() - start_time)
                 img = []
-
-        iter_times = np.array(iter_times)
+        
+        first_iter_time = iter_times[0]
+        iter_times = np.array(iter_times[1:])
 
         results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{1}'])
         results.loc['batch_size']              = [eval_batch_size]
