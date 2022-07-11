@@ -151,6 +151,7 @@ for user_batch in user_batchs:
     iter_ds = pd.DataFrame()
     results = pd.DataFrame()
     for eval_batch_size in batch_list:
+        walltime_start = time.time()
         opt ={'batch_size': eval_batch_size}
         compiled_model_dir = f'{model_type}_batch_{eval_batch_size}'
         inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
