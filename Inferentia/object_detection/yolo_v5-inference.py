@@ -144,7 +144,7 @@ clsid2catid = {0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 
 
 model_type = 'yolo_v5_coco'
 
-batch_list = [1, 2, 4, 8, 16, 32, 64]
+batch_list = [1, 2]
 user_batchs = [1, 2, 4, 8, 16, 32, 64]
 inf1_model_dir = f'{model_type}_inf1_saved_models'
 for user_batch in user_batchs:
