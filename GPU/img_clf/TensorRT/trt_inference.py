@@ -129,7 +129,7 @@ def trt_predict_benchmark(trt_compiled_model_dir,precision, batchsize, display_e
     results.loc['prediction_time']         = [np.sum(iter_times)*1000]
     results.loc['images_per_sec_mean']     = [np.mean(batchsize / iter_times)]
     results.loc['images_per_sec_std']      = [np.std(batchsize / iter_times, ddof=1)]
-    results.loc['first_iteration_time']    = [first_iter_time]
+    results.loc['first_iteration_time']    = [first_iter_time*1000]
     results.loc['average_iteration_time']  = [np.mean(iter_times[1:])*1000]
     results.loc['load_time']               = [load_time*1000]
     results.loc['wall_time']               = [(time.time() - walltime_start)*1000]
