@@ -84,8 +84,6 @@ def val_preprocessing(record):
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
     
     image = models[model_type].preprocess_input(image)
-    print('image',image)
-    print('label',label)
     return image, label
 
 def get_dataset(batch_size, use_cache=False):
@@ -120,11 +118,8 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     
     ds = get_dataset(user_batch_size, use_cache)
     counter = 0
-    print(model_inf1)
     
     for batch, batch_labels in ds:
-        print('batch',batch)
-        print(batch_labels)
         start_time = time.time()
         yhat_np = inference_function(batch)
         if counter ==0:
