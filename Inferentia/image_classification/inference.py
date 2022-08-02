@@ -135,12 +135,11 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 
         counter+=1
         
-        if counter == 10:
-            break
     iter_times = np.array(iter_times)
     acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
     results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
     results.loc['batch_size']              = [batch_size]
+    results.loc['user_batch_size']              = [user_batch_size]
     results.loc['accuracy']                = [acc_inf1]
     results.loc['first_prediction_time']   = [first_iter_time * 1000]
     results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
@@ -167,7 +166,7 @@ for model_type in model_types:
         iter_ds = pd.DataFrame()
         results = pd.DataFrame()
         for batch_size in batch_list:
-            opt ={'batch_size': batch_size}
+            opt ={'batch_size': user_batch}
             compiled_model_dir = f'{model_type}_batch_{batch_size}'
             inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
