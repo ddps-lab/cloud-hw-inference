@@ -156,7 +156,8 @@ for model_type in model_types:
     _ = models[model_type].preprocess_input(temp)
 
     # testing batch size
-    batch_list = [1, 2, 4, 8, 16, 32, 64]
+#     batch_list = [1, 2, 4, 8, 16, 32, 64]
+    batch_list = [1]
     user_batchs = [1, 2, 4, 8, 16, 32, 64]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
 
