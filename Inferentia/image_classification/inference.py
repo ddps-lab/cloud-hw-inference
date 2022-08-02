@@ -53,6 +53,8 @@ models = {
 
 data_dir = os.environ['dataset']
 
+mtype = ""
+
 def deserialize_image_record(record):
     feature_map = {'image/encoded': tf.io.FixedLenFeature([], tf.string, ''),
                   'image/class/label': tf.io.FixedLenFeature([1], tf.int64, -1)}
@@ -82,6 +84,8 @@ def val_preprocessing(record):
     
     image = tf.image.resize(image, [new_height, new_width], method='bicubic')
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
+    if "xception" in mtype or "inception_v3" in mtype:
+        image = tf.image.resize_with_crop_or_pad(image, 299, 299)
     
     image = models[model_type].preprocess_input(image)
     return image, label
@@ -89,7 +93,6 @@ def val_preprocessing(record):
 def get_dataset(batch_size, use_cache=False):
     files = tf.io.gfile.glob(os.path.join(data_dir))
     dataset = tf.data.TFRecordDataset(data_dir)
-    print('files',dataset)
     dataset = dataset.map(map_func=val_preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
@@ -152,6 +155,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 model_types = ['resnet50', 'vgg16', 'xception', 'inception_v3', 'mobilenet_v2']
 
 for model_type in model_types:
+    mtype = model_type
     # https://github.com/tensorflow/tensorflow/issues/29931
     temp = tf.zeros([8, 224, 224, 3])
     _ = models[model_type].preprocess_input(temp)
