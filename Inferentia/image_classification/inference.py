@@ -135,6 +135,8 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 
         counter+=1
         
+        if counter == 10:
+            break
     iter_times = np.array(iter_times)
     acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
     results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
