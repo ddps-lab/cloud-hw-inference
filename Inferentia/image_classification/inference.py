@@ -172,7 +172,7 @@ for model_type in model_types:
             inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
             print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-            col_name = lambda opt: f'inf1_{batch_size}'
+            col_name = lambda opt: f'inf1_{user_batch}'
 
             res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
                                                                              batch_size = batch_size,
