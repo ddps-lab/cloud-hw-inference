@@ -106,6 +106,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     shutil.rmtree(inf1_compiled_model_dir, ignore_errors=True)
 
     example_input = np.zeros([batch_size,224,224,3], dtype='float32')
+    model = load_model(saved_model_dir, compile=True)
     
     start_time = time.time()
     compiled_model = tfn.trace(model,example_input)
