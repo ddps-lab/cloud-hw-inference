@@ -26,7 +26,7 @@ from tensorflow.keras.applications import (
 from tensorflow.keras.preprocessing import image
 # from concurrent import futures
 from itertools import compress
-
+from tensorflow.keras.models import load_model
 
 models = {
     'xception':xception,
