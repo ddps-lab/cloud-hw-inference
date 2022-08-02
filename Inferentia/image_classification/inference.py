@@ -160,7 +160,7 @@ for model_type in model_types:
     # testing batch size
 #     batch_list = [1, 2, 4, 8, 16, 32, 64]
     batch_list = [1]
-    user_batchs = [1, 2, 4, 8, 16, 32, 64]
+    user_batchs = [1, 64]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
 
     for user_batch in user_batchs:
@@ -182,4 +182,5 @@ for model_type in model_types:
 
             iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
             results = pd.concat([results, res], axis=1)
-        results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+        print(results)
+        results.to_csv(f'{model_type}_batch_size_{user_batch}.csv')
