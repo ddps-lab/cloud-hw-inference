@@ -173,7 +173,7 @@ for user_batch in user_batchs:
         img = []
         for image in image_list:
             img.append(image)
-            if len(img) == user_batch_size * eval_batch_size:
+            if len(img) == user_batch * eval_batch_size:
                 inf_image = filenames_to_input(img)
                 start_time = time.time()
                 res = yolo_pred(inf_image)
