@@ -147,9 +147,10 @@ model_type = 'yolo_v5_coco'
 batch_list = [1]
 user_batchs = [1, 2, 4, 8, 16, 32, 64]
 inf1_model_dir = f'{model_type}_inf1_saved_models'
+iter_ds = pd.DataFrame()
+result_list = pd.DataFrame()
+
 for user_batch in user_batchs:
-    iter_ds = pd.DataFrame()
-    result_list = pd.DataFrame()
     for eval_batch_size in batch_list:
         walltime_start = time.time()
         opt ={'batch_size': eval_batch_size}
