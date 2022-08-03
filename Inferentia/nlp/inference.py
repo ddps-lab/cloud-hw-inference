@@ -26,7 +26,7 @@ batch_sizes = parser.parse_args().batch_list
 
 #benchmark batch 128 neuron model
 batch_sizes = [1, 2, 4, 8, 16, 32, 64]
-# compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+compiled_batch_sizes = [1]
 
 iter_ds = pd.DataFrame()
 results = pd.DataFrame()
