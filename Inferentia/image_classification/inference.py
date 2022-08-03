@@ -53,6 +53,8 @@ models = {
 
 data_dir = os.environ['dataset']
 
+mtype = ""
+
 def deserialize_image_record(record):
     feature_map = {'image/encoded': tf.io.FixedLenFeature([], tf.string, ''),
                   'image/class/label': tf.io.FixedLenFeature([1], tf.int64, -1)}
@@ -82,6 +84,8 @@ def val_preprocessing(record):
     
     image = tf.image.resize(image, [new_height, new_width], method='bicubic')
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
+    if "xception" in mtype or "inception_v3" in mtype:
+        image = tf.image.resize_with_crop_or_pad(image, 299, 299)
     
     image = models[model_type].preprocess_input(image)
     return image, label
@@ -89,7 +93,6 @@ def val_preprocessing(record):
 def get_dataset(batch_size, use_cache=False):
     files = tf.io.gfile.glob(os.path.join(data_dir))
     dataset = tf.data.TFRecordDataset(data_dir)
-    print('files',dataset)
     dataset = dataset.map(map_func=val_preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
@@ -139,6 +142,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
     results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
     results.loc['batch_size']              = [batch_size]
+    results.loc['user_batch_size']              = [user_batch_size]
     results.loc['accuracy']                = [acc_inf1]
     results.loc['first_prediction_time']   = [first_iter_time * 1000]
     results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
@@ -148,28 +152,31 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 
     return results, iter_times
   
-model_types = ['resnet50', 'vgg16', 'xception', 'inception_v3', 'mobilenet_v2']
+model_types = ['mobilenet_v2', 'inception_v3', 'xception', 'resnet50', 'vgg16']
 
 for model_type in model_types:
+    mtype = model_type
     # https://github.com/tensorflow/tensorflow/issues/29931
     temp = tf.zeros([8, 224, 224, 3])
     _ = models[model_type].preprocess_input(temp)
 
     # testing batch size
-    batch_list = [1, 2, 4, 8, 16, 32, 64]
+#     batch_list = [1, 2, 4, 8, 16, 32, 64]
+    batch_list = [1]
     user_batchs = [1, 2, 4, 8, 16, 32, 64]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
+    
+    iter_ds = pd.DataFrame()
+    results = pd.DataFrame()
 
     for user_batch in user_batchs:
-        iter_ds = pd.DataFrame()
-        results = pd.DataFrame()
         for batch_size in batch_list:
-            opt ={'batch_size': batch_size}
+            opt ={'batch_size': user_batch}
             compiled_model_dir = f'{model_type}_batch_{batch_size}'
             inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
             print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-            col_name = lambda opt: f'inf1_{batch_size}'
+            col_name = lambda opt: f'inf1_{user_batch}'
 
             res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
                                                                              batch_size = batch_size,
@@ -179,4 +186,5 @@ for model_type in model_types:
 
             iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
             results = pd.concat([results, res], axis=1)
-        results.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+        print(results)
+    results.to_csv(f'{model_type}_batch_size_{user_batch}.csv')

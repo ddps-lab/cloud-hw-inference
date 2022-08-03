@@ -25,13 +25,14 @@ batch_sizes = parser.parse_args().batch_list
 
 
 #benchmark batch 128 neuron model
-# batch_sizes = [1, 2, 4, 8, 16, 32, 64]
-compiled_batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+compiled_batch_sizes = [1]
+
+iter_ds = pd.DataFrame()
+results = pd.DataFrame()
 
 for batch_size in batch_sizes:
     batch_size = int(batch_size)
-    iter_ds = pd.DataFrame()
-    results = pd.DataFrame()
     walltime_start = time.time()
     result_list = pd.DataFrame()
     for compiled_batch in compiled_batch_sizes:
@@ -71,4 +72,4 @@ for batch_size in batch_sizes:
         print(results)    
         result_list = pd.concat([result_list, results], axis = 1)
     print(result_list)
-    result_list.to_csv(f'{model_type}_batch_size_{batch_size}.csv')
+result_list.to_csv(f'{model_type}.csv')
