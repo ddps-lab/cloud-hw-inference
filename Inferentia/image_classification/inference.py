@@ -152,7 +152,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 
     return results, iter_times
   
-model_types = ['inception_v3', 'mobilenet_v2']
+model_types = ['mobilenet_v2', 'inception_v3']
 
 for model_type in model_types:
     mtype = model_type
