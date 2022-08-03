@@ -153,6 +153,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     return results, iter_times
   
 model_types = ['mobilenet_v2', 'inception_v3']
+model_types = ['inception_v3']
 
 for model_type in model_types:
     mtype = model_type
@@ -163,7 +164,7 @@ for model_type in model_types:
     # testing batch size
 #     batch_list = [1, 2, 4, 8, 16, 32, 64]
     batch_list = [1]
-    user_batchs = [1, 64]
+    user_batchs = [64]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
 
     for user_batch in user_batchs:
