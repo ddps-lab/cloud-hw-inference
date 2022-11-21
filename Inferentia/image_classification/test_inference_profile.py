@@ -27,6 +27,8 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.models import load_model
 from concurrent import futures
 from itertools import compress
+import argparse
+
 
 models = {
     'xception':xception,
@@ -155,37 +157,35 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
   
 model_types = ['vgg16']
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--batch',default=1, type=int )
+
+user_batch = parser.parse_args().batch
+
 for model_type in model_types:
     mtype = model_type
     # https://github.com/tensorflow/tensorflow/issues/29931
     temp = tf.zeros([8, 224, 224, 3])
     _ = models[model_type].preprocess_input(temp)
 
-    # testing batch size
-#     batch_list = [1, 2, 4, 8, 16, 32, 64]
-    batch_list = [1]
-    user_batchs = [1]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
     
     iter_ds = pd.DataFrame()
     results = pd.DataFrame()
+    batch_size = 1
+    opt ={'batch_size': user_batch}
+    compiled_model_dir = f'{model_type}_batch_{batch_size}'
+    inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
 
-    for user_batch in user_batchs:
-        for batch_size in batch_list:
-            opt ={'batch_size': user_batch}
-            compiled_model_dir = f'{model_type}_batch_{batch_size}'
-            inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
+    print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
+    col_name = lambda opt: f'inf1_{user_batch}'
+    res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
+                                                                     batch_size = batch_size,
+                                                                     user_batch_size = batch_size*user_batch,
+                                                                     use_cache=False, 
+                                                                     warm_up=10)
 
-            print(f'inf1_compiled_model_dir: {inf1_compiled_model_dir}')
-            col_name = lambda opt: f'inf1_{user_batch}'
-
-            res, iter_times = inf1_predict_benchmark_single_threaded(inf1_compiled_model_dir,
-                                                                             batch_size = batch_size,
-                                                                             user_batch_size = batch_size*user_batch,
-                                                                             use_cache=False, 
-                                                                             warm_up=10)
-
-            iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-            results = pd.concat([results, res], axis=1)
-        print(results)
+    iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+    results = pd.concat([results, res], axis=1)
+    print(results)
     results.to_csv(f'{model_type}_batch_size_{user_batch}.csv')
