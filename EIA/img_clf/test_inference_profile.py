@@ -111,12 +111,12 @@ def ei_inference(saved_model_dir, batch_size, accelerator_id):
         if i == 0:
             for j in range(warm_up):
                 _ = eia_model(model_feed_dict)
-        tf.profiler.experimental.start('profile')
+#         tf.profiler.experimental.start('profile')
         start_time = time.time()
         
         pred_prob = eia_model(model_feed_dict)
         inf_time = time.time() - start_time
-        tf.profiler.experimental.stop()
+#         tf.profiler.experimental.stop()
 
         if i ==0:
             first_iter_time = inf_time
