@@ -109,10 +109,12 @@ def ei_inference(saved_model_dir, batch_size, accelerator_id):
         if i == 0:
             for j in range(warm_up):
                 _ = eia_model(model_feed_dict)
-
+        tf.profiler.experimental.start('logdir')
         start_time = time.time()
+        
         pred_prob = eia_model(model_feed_dict)
         inf_time = time.time() - start_time
+        tf.profiler.experimental.stop()
 
         if i ==0:
             first_iter_time = inf_time
@@ -150,11 +152,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model',default='resnet50' , type=str )
     parser.add_argument('--imgsize',default=224,type=int)
-    parser.add_argument('--batch_list',default=[1,2,4,8,16,32,64], type=list)
+    parser.add_argument('--batch',default=1, type=int)
     parser.add_argument('--eia_acc_id',default=0,type=int) 
     
     model = parser.parse_args().model
-    batch_list = parser.parse_args().batch_list
+    batch_size = parser.parse_args().batch
     eia_acc_id = parser.parse_args().eia_acc_id
     img_size = parser.parse_args().imgsize
 
@@ -163,16 +165,15 @@ if __name__ == "__main__":
 
     col_name = lambda ei_acc_id: f'ei_{ei_client.describe_accelerators()["acceleratorSet"][ei_acc_id]["acceleratorType"]}_batch_size_{batch_size}'
     # ei_options = [{'ei_acc_id': 0}]
-    for batch_size in batch_list:
-        opt = {'batch_size': batch_size}
-        iter_ds = pd.DataFrame()
-        
-        print(f'{model}-{batch_size} start')
-        res, iter_times = ei_inference(model, int(batch_size),eia_acc_id)
-        col_name = lambda opt: f'{model}_{batch_size}'
-        
-        iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-        results = pd.concat([results, res], axis=1)
-        print(results)
+    opt = {'batch_size': batch_size}
+    iter_ds = pd.DataFrame()
+
+    print(f'{model}-{batch_size} start')
+    res, iter_times = ei_inference(model, int(batch_size),eia_acc_id)
+    col_name = lambda opt: f'{model}_{batch_size}'
+
+    iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+    results = pd.concat([results, res], axis=1)
+    print(results)
 
     results.to_csv(f'{model}_EIA_{ei_size}.csv')
