@@ -109,7 +109,7 @@ def ei_inference(saved_model_dir, batch_size, accelerator_id):
         if i == 0:
             for j in range(warm_up):
                 _ = eia_model(model_feed_dict)
-        tf.profiler.experimental.start('logdir')
+        tf.profiler.experimental.start('profile')
         start_time = time.time()
         
         pred_prob = eia_model(model_feed_dict)
