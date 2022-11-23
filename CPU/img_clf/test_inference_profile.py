@@ -142,6 +142,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch', default=1, type=int)
 
     model = parser.parse_args().model
+    saved_model = model + '_saved_model'
     batch_size = parser.parse_args().batch
 
     results = pd.DataFrame()
@@ -150,7 +151,7 @@ if __name__ == "__main__":
     iter_ds = pd.DataFrame()
 
     print(f'{model}-{batch_size} start')
-    res, iter_times = inference(model, int(batch_size))
+    res, iter_times = inference(saved_model, int(batch_size))
     col_name = lambda opt: f'{model}_{batch_size}'
 
     iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
