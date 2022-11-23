@@ -64,7 +64,7 @@ def val_preprocessing(record):
 
 
 def get_dataset(batch_size, use_cache=False):
-    data_dir = '/home/ubuntu/datasets/*'
+    data_dir = '/home/ubuntu/datasets/images-1000/*'
     files = tf.io.gfile.glob(os.path.join(data_dir))
     dataset = tf.data.TFRecordDataset(files)
 
@@ -103,6 +103,8 @@ def inference(saved_model_name, batch_size):
         yhat_np = model.predict(batch)
         inference_time = time.time() - start_time
         tf.profiler.experimental.stop()
+        break
+
         if counter == 0:
             first_iter_time = inference_time
         else:
