@@ -9,7 +9,6 @@ import os
 import boto3
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 print(tf.__version__) 
 
