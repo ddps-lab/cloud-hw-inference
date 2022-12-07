@@ -75,26 +75,26 @@ models_detail = {
 }
 
 
-model_types = ['xception', 'vgg16', 'resnet50', 'inception_v3', 'mobilenet_v2']
+model_types = ['vgg16', 'resnet50', 'inception_v3', 'mobilenet_v2']
 
-for model_type in model_types:
-    # https://github.com/tensorflow/tensorflow/issues/29931
-    temp = tf.zeros([8, 224, 224, 3])
-    _ = models[model_type].preprocess_input(temp)
+# for model_type in model_types:
+#     # https://github.com/tensorflow/tensorflow/issues/29931
+#     temp = tf.zeros([8, 224, 224, 3])
+#     _ = models[model_type].preprocess_input(temp)
 
-    # Export SavedModel
+#     # Export SavedModel
 
-    saved_model_dir = f'{model_type}_saved_model'
-    shutil.rmtree(saved_model_dir, ignore_errors=True)
+#     saved_model_dir = f'{model_type}_saved_model'
+#     shutil.rmtree(saved_model_dir, ignore_errors=True)
 
-    model = models_detail[model_type]
+#     model = models_detail[model_type]
 
-    model.save(saved_model_dir)
+#     model.save(saved_model_dir)
 
-    from tensorflow.keras.models import load_model
-    model = load_model(saved_model_dir, compile=True)
+#     from tensorflow.keras.models import load_model
+#     model = load_model(saved_model_dir, compile=True)
 
-    model.summary()
+#     model.summary()
 
     
 def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=1, use_static_weights=False):
