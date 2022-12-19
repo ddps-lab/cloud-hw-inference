@@ -24,6 +24,8 @@ from tensorflow.keras.applications import (
     efficientnet,
     efficientnet_v2,
     mobilenet_v3,
+    MobileNetV3Small,
+    MobileNetV3Large,
 )
 # from keras import backend as K
 from tensorflow.keras.preprocessing import image
@@ -103,8 +105,8 @@ models_detail = {
     'efficientnet_v2l':efficientnet_v2.EfficientNetV2L(weights='imagenet'),
     'efficientnet_v2m':efficientnet_v2.EfficientNetV2M(weights='imagenet'),
     'efficientnet_v2s':efficientnet_v2.EfficientNetV2S(weights='imagenet'),
-    'mobilenet_v3small':mobilenet_v3.MobileNetV3Small(weights='imagenet'),
-    'mobilenet_v3large':mobilenet_v3.MobileNetV3Large(weights='imagenet'),
+    'mobilenet_v3small':MobileNetV3Small(weights='imagenet'),
+    'mobilenet_v3large':MobileNetV3Large(weights='imagenet'),
 }
 
 
