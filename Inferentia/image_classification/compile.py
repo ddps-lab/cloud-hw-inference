@@ -15,6 +15,7 @@ from tensorflow.keras.applications import (
     resnet,
     resnet50,
     resnet_v2,
+    resnext,
     inception_v3,
     inception_resnet_v2,
     mobilenet,
