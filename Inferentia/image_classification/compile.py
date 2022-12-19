@@ -29,53 +29,54 @@ from itertools import compress
 from tensorflow.keras.models import load_model
 
 models = {
-    'xception':xception,
-    'vgg16':vgg16,
-#     'vgg19':vgg19,
+#     'xception':xception,
+#     'vgg16':vgg16,
+    'vgg19':vgg19,
     'resnet50':resnet50,
-#     'resnet101':resnet,
-#     'resnet152':resnet,
-#     'resnet50_v2':resnet_v2,
-#     'resnet101_v2':resnet_v2,
-#     'resnet152_v2':resnet_v2,
-#     'resnext50':resnext,
-#     'resnext101':resnext,
-    'inception_v3':inception_v3,
-#     'inception_resnet_v2':inception_resnet_v2,
-#     'mobilenet':mobilenet,
-#     'densenet121':densenet,
-#     'densenet169':densenet,
-#     'densenet201':densenet,
-#     'nasnet':nasnet,
-#     'nasnet':nasnet,
-    'mobilenet_v2':mobilenet_v2
+    'resnet101':resnet,
+    'resnet152':resnet,
+    'resnet50_v2':resnet_v2,
+    'resnet101_v2':resnet_v2,
+    'resnet152_v2':resnet_v2,
+    'resnext50':resnext,
+    'resnext101':resnext,
+#     'inception_v3':inception_v3,
+    'inception_resnet_v2':inception_resnet_v2,
+    'mobilenet':mobilenet,
+    'densenet121':densenet,
+    'densenet169':densenet,
+    'densenet201':densenet,
+    'nasnet':nasnet,
+#     'mobilenet_v2':mobilenet_v2
 }
 
 models_detail = {
-    'xception':xception.Xception(weights='imagenet'),
-    'vgg16':vgg16.VGG16(weights='imagenet'),
-#     'vgg19':vgg19.VGG19(weights='imagenet'),
-    'resnet50':resnet50.ResNet50(weights='imagenet'),
-#     'resnet101':resnet.ResNet101(weights='imagenet'),
-#     'resnet152':resnet.ResNet152(weights='imagenet'),
-#     'resnet50_v2':resnet_v2.ResNet50V2(weights='imagenet'),
-#     'resnet101_v2':resnet_v2.ResNet101V2(weights='imagenet'),
-#     'resnet152_v2':resnet_v2.ResNet152V2(weights='imagenet'),
-#     'resnext50':resnext.ResNeXt50(weights='imagenet'),
-#     'resnext101':resnext.ResNeXt101(weights='imagenet'),
+#     'xception':xception.Xception(weights='imagenet'),
+#     'vgg16':vgg16.VGG16(weights='imagenet'),
+    'vgg19':vgg19.VGG19(weights='imagenet'),
+#     'resnet50':resnet50.ResNet50(weights='imagenet'),
+    'resnet101':resnet.ResNet101(weights='imagenet'),
+    'resnet152':resnet.ResNet152(weights='imagenet'),
+    'resnet50_v2':resnet_v2.ResNet50V2(weights='imagenet'),
+    'resnet101_v2':resnet_v2.ResNet101V2(weights='imagenet'),
+    'resnet152_v2':resnet_v2.ResNet152V2(weights='imagenet'),
+    'resnext50':resnext.ResNeXt50(weights='imagenet'),
+    'resnext101':resnext.ResNeXt101(weights='imagenet'),
     'inception_v3':inception_v3.InceptionV3(weights='imagenet'),
-#     'inception_resnet_v2':inception_resnet_v2.InceptionResNetV2(weights='imagenet'),
-#     'mobilenet':mobilenet.MobileNet(weights='imagenet'),
-#     'densenet121':densenet.DenseNet121(weights='imagenet'),
-#     'densenet169':densenet.DenseNet169(weights='imagenet'),
-#     'densenet201':densenet.DenseNet201(weights='imagenet'),
-#     'nasnet':nasnet.NASNetLarge(weights='imagenet'),
-#     'nasnet':nasnet.NASNetMobile(weights='imagenet'),
-    'mobilenet_v2':mobilenet_v2.MobileNetV2(weights='imagenet')
+    'inception_resnet_v2':inception_resnet_v2.InceptionResNetV2(weights='imagenet'),
+    'mobilenet':mobilenet.MobileNet(weights='imagenet'),
+    'densenet121':densenet.DenseNet121(weights='imagenet'),
+    'densenet169':densenet.DenseNet169(weights='imagenet'),
+    'densenet201':densenet.DenseNet201(weights='imagenet'),
+    'nasnetlarge':nasnet.NASNetLarge(weights='imagenet'),
+    'nasnetmobile':nasnet.NASNetMobile(weights='imagenet'),
+#     'mobilenet_v2':mobilenet_v2.MobileNetV2(weights='imagenet')
 }
 
 
-model_types = ['xception', 'vgg16', 'resnet50', 'inception_v3', 'mobilenet_v2']
+model_types = [key for key, value in model_detail.items()]
+
+print(model_types)
 
 for model_type in model_types:
     # https://github.com/tensorflow/tensorflow/issues/29931
