@@ -110,7 +110,7 @@ models_detail = {
 }
 
 
-model_types = [key for key, value in model_detail.items()]
+model_types = [key for key, value in models_detail.items()]
 
 print(model_types)
 
