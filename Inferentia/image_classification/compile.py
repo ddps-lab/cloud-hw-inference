@@ -74,7 +74,6 @@ models = {
 models_detail = {
 #     'xception':xception.Xception(weights='imagenet'),
 #     'vgg16':vgg16.VGG16(weights='imagenet'),
-    'vgg19':vgg19.VGG19(weights='imagenet'),
 #     'resnet50':resnet50.ResNet50(weights='imagenet'),
     'resnet101':resnet.ResNet101(weights='imagenet'),
     'resnet152':resnet.ResNet152(weights='imagenet'),
@@ -107,6 +106,7 @@ models_detail = {
     'efficientnet_v2s':efficientnet_v2.EfficientNetV2S(weights='imagenet'),
     'mobilenet_v3small':MobileNetV3Small(weights='imagenet'),
     'mobilenet_v3large':MobileNetV3Large(weights='imagenet'),
+    'vgg19':vgg19.VGG19(weights='imagenet'),
 }
 
 
@@ -114,24 +114,24 @@ model_types = [key for key, value in models_detail.items()]
 
 print(model_types)
 
-for model_type in model_types:
-    # https://github.com/tensorflow/tensorflow/issues/29931
-    temp = tf.zeros([8, 224, 224, 3])
-    _ = models[model_type].preprocess_input(temp)
+# for model_type in model_types:
+#     # https://github.com/tensorflow/tensorflow/issues/29931
+#     temp = tf.zeros([8, 224, 224, 3])
+#     _ = models[model_type].preprocess_input(temp)
 
-    # Export SavedModel
+#     # Export SavedModel
 
-    saved_model_dir = f'{model_type}_saved_model'
-    shutil.rmtree(saved_model_dir, ignore_errors=True)
+#     saved_model_dir = f'{model_type}_saved_model'
+#     shutil.rmtree(saved_model_dir, ignore_errors=True)
 
-    model = models_detail[model_type]
+#     model = models_detail[model_type]
 
-    model.save(saved_model_dir)
+#     model.save(saved_model_dir)
 
-    from tensorflow.keras.models import load_model
-    model = load_model(saved_model_dir, compile=True)
+#     from tensorflow.keras.models import load_model
+#     model = load_model(saved_model_dir, compile=True)
 
-    model.summary()
+#     model.summary()
 
     
 def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=1, use_static_weights=False):
