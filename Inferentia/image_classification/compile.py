@@ -15,13 +15,15 @@ from tensorflow.keras.applications import (
     resnet,
     resnet50,
     resnet_v2,
-    resnext,
     inception_v3,
     inception_resnet_v2,
     mobilenet,
     densenet,
     nasnet,
-    mobilenet_v2
+    mobilenet_v2,
+    efficientnet,
+    efficientnet_v2,
+    mobilenet_v3,
 )
 # from keras import backend as K
 from tensorflow.keras.preprocessing import image
