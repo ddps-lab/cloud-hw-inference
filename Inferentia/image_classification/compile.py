@@ -100,9 +100,9 @@ models_detail = {
     'efficientnet_v2b1':efficientnet_v2.EfficientNetV2B1(weights='imagenet'),
     'efficientnet_v2b2':efficientnet_v2.EfficientNetV2B2(weights='imagenet'),
     'efficientnet_v2b3':efficientnet_v2.EfficientNetV2B3(weights='imagenet'),
-    'efficientnet_v2l':efficientnet_v2.EfficientNetV2BL(weights='imagenet'),
-    'efficientnet_v2m':efficientnet_v2.EfficientNetV2BM(weights='imagenet'),
-    'efficientnet_v2s':efficientnet_v2.EfficientNetV2BS(weights='imagenet'),
+    'efficientnet_v2l':efficientnet_v2.EfficientNetV2L(weights='imagenet'),
+    'efficientnet_v2m':efficientnet_v2.EfficientNetV2M(weights='imagenet'),
+    'efficientnet_v2s':efficientnet_v2.EfficientNetV2S(weights='imagenet'),
     'mobilenet_v3small':mobilenet_v3.MobileNetV3Small(weights='imagenet'),
     'mobilenet_v3large':mobilenet_v3.MobileNetV3Large(weights='imagenet'),
 }
