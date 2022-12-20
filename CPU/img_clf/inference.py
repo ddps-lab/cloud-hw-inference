@@ -24,6 +24,8 @@ from tensorflow.keras.applications import (
     MobileNetV3Small,
     MobileNetV3Large,
 )
+
+from tensorflow.keras.layers import Input
 input_tensor = Input(shape=(224, 224, 3))
 
 models = {
