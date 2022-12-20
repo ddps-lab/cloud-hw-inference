@@ -68,7 +68,7 @@ models = {
     'efficientnet_v2b2':efficientnet_v2,
     'efficientnet_v2b3':efficientnet_v2,
     'efficientnet_v2l':efficientnet_v2,
-    'efficientnet_v2m':efficientnet_v2,
+#     'efficientnet_v2m':efficientnet_v2,
     'efficientnet_v2s':efficientnet_v2,
     'mobilenet_v3small':mobilenet_v3,
     'mobilenet_v3large':mobilenet_v3,
