@@ -32,6 +32,9 @@ from tensorflow.keras.preprocessing import image
 # from concurrent import futures
 from itertools import compress
 from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Input
+
+input_tensor = Input(shape=(224, 224, 3))
 
 models = {
 #     'xception':xception,
@@ -89,24 +92,24 @@ models_detail = {
     'nasnetmobile':nasnet.NASNetMobile(weights='imagenet'),
 #     'mobilenet_v2':mobilenet_v2.MobileNetV2(weights='imagenet'),
     'efficientnetb0':efficientnet.EfficientNetB0(weights='imagenet'),
-    'efficientnetb1':efficientnet.EfficientNetB1(weights='imagenet'),
-    'efficientnetb2':efficientnet.EfficientNetB2(weights='imagenet'),
-    'efficientnetb3':efficientnet.EfficientNetB3(weights='imagenet'),
-    'efficientnetb4':efficientnet.EfficientNetB4(weights='imagenet'),
-    'efficientnetb5':efficientnet.EfficientNetB5(weights='imagenet'),
-    'efficientnetb6':efficientnet.EfficientNetB6(weights='imagenet'),
-    'efficientnetb7':efficientnet.EfficientNetB7(weights='imagenet'),
-    'efficientnet_v2b0':efficientnet_v2.EfficientNetV2B0(weights='imagenet'),
-    'efficientnet_v2b1':efficientnet_v2.EfficientNetV2B1(weights='imagenet'),
-    'efficientnet_v2b2':efficientnet_v2.EfficientNetV2B2(weights='imagenet'),
-    'efficientnet_v2b3':efficientnet_v2.EfficientNetV2B3(weights='imagenet'),
-    'efficientnet_v2l':efficientnet_v2.EfficientNetV2L(weights='imagenet'),
-    'efficientnet_v2m':efficientnet_v2.EfficientNetV2M(weights='imagenet'),
-    'efficientnet_v2s':efficientnet_v2.EfficientNetV2S(weights='imagenet'),
-    'mobilenet_v3small':MobileNetV3Small(weights='imagenet'),
-    'mobilenet_v3large':MobileNetV3Large(weights='imagenet'),
+    'efficientnetb1':efficientnet.EfficientNetB1(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb2':efficientnet.EfficientNetB2(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb3':efficientnet.EfficientNetB3(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb4':efficientnet.EfficientNetB4(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb5':efficientnet.EfficientNetB5(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb6':efficientnet.EfficientNetB6(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb7':efficientnet.EfficientNetB7(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b0':efficientnet_v2.EfficientNetV2B0(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b1':efficientnet_v2.EfficientNetV2B1(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b2':efficientnet_v2.EfficientNetV2B2(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b3':efficientnet_v2.EfficientNetV2B3(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2l':efficientnet_v2.EfficientNetV2L(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2m':efficientnet_v2.EfficientNetV2M(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2s':efficientnet_v2.EfficientNetV2S(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'mobilenet_v3small':MobileNetV3Small(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'mobilenet_v3large':MobileNetV3Large(input_tensor=input_tensor, weights='imagenet', include_top=True),
     'vgg19':vgg19.VGG19(weights='imagenet'),
-    'nasnetlarge':nasnet.NASNetLarge(weights='imagenet'),
+    'nasnetlarge':nasnet.NASNetLarge(input_tensor=input_tensor, weights='imagenet', include_top=True),
 }
 
 
@@ -144,8 +147,8 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     example_input = np.zeros([batch_size,224,224,3], dtype='float32')
     if "xception" in saved_model_dir or "inception_v3" in saved_model_dir or 'inception_resnet_v2' in saved_model_dir:
         example_input = np.zeros([batch_size,299,299,3], dtype='float32')
-    elif "nasnetlarge" in saved_model_dir:
-        example_input = np.zeros([batch_size,331,331,3], dtype='float32')
+#     elif "nasnetlarge" in saved_model_dir:
+#         example_input = np.zeros([batch_size,331,331,3], dtype='float32')
         
     model = load_model(saved_model_dir, compile=True)
     
