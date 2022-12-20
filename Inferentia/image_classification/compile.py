@@ -81,11 +81,11 @@ models_detail = {
 #     'resnet101_v2':resnet_v2.ResNet101V2(weights='imagenet'),
 #     'resnet152_v2':resnet_v2.ResNet152V2(weights='imagenet'),
 #     'inception_v3':inception_v3.InceptionV3(weights='imagenet'),
-    'inception_resnet_v2':inception_resnet_v2.InceptionResNetV2(weights='imagenet'),
-    'mobilenet':mobilenet.MobileNet(weights='imagenet'),
-    'densenet121':densenet.DenseNet121(weights='imagenet'),
-    'densenet169':densenet.DenseNet169(weights='imagenet'),
-    'densenet201':densenet.DenseNet201(weights='imagenet'),
+#     'inception_resnet_v2':inception_resnet_v2.InceptionResNetV2(weights='imagenet'),
+#     'mobilenet':mobilenet.MobileNet(weights='imagenet'),
+#     'densenet121':densenet.DenseNet121(weights='imagenet'),
+#     'densenet169':densenet.DenseNet169(weights='imagenet'),
+#     'densenet201':densenet.DenseNet201(weights='imagenet'),
     'nasnetlarge':nasnet.NASNetLarge(weights='imagenet'),
     'nasnetmobile':nasnet.NASNetMobile(weights='imagenet'),
 #     'mobilenet_v2':mobilenet_v2.MobileNetV2(weights='imagenet'),
@@ -135,8 +135,7 @@ print(model_types)
 
     
 def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=1, use_static_weights=False):
-    print(f'-----------batch size: {batch_size}----------')
-    print('Compiling...')
+    print(f'Compiling...{inf1_model_dir}')
     
     compiled_model_dir = f'{model_type}_batch_{batch_size}'
     inf1_compiled_model_dir = os.path.join(inf1_model_dir, compiled_model_dir)
@@ -145,6 +144,8 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     example_input = np.zeros([batch_size,224,224,3], dtype='float32')
     if "xception" in saved_model_dir or "inception_v3" in saved_model_dir or 'inception_resnet_v2' in saved_model_dir:
         example_input = np.zeros([batch_size,299,299,3], dtype='float32')
+    elif "nasnetlarge" in saved_model_dir:
+        example_input = np.zeros([batch_size,331,331,3], dtype='float32')
         
     model = load_model(saved_model_dir, compile=True)
     
