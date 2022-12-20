@@ -183,9 +183,12 @@ def inference(saved_model_name, batch_size):
             for i in range(warm_up):
                 _ = model.predict(batch)
 
+        tf.profiler.experimental.start('profile')
         start_time = time.time()
         yhat_np = model.predict(batch)
-        inference_time = time.time()-start_time
+        inference_time = time.time() - start_time
+        tf.profiler.experimental.stop()
+        
         if counter ==0:
             first_iter_time = inference_time
         else:
