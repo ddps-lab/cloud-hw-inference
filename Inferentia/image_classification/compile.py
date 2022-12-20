@@ -86,7 +86,6 @@ models_detail = {
 #     'densenet121':densenet.DenseNet121(weights='imagenet'),
 #     'densenet169':densenet.DenseNet169(weights='imagenet'),
 #     'densenet201':densenet.DenseNet201(weights='imagenet'),
-    'nasnetlarge':nasnet.NASNetLarge(weights='imagenet'),
     'nasnetmobile':nasnet.NASNetMobile(weights='imagenet'),
 #     'mobilenet_v2':mobilenet_v2.MobileNetV2(weights='imagenet'),
     'efficientnetb0':efficientnet.EfficientNetB0(weights='imagenet'),
@@ -107,6 +106,7 @@ models_detail = {
     'mobilenet_v3small':MobileNetV3Small(weights='imagenet'),
     'mobilenet_v3large':MobileNetV3Large(weights='imagenet'),
     'vgg19':vgg19.VGG19(weights='imagenet'),
+    'nasnetlarge':nasnet.NASNetLarge(weights='imagenet'),
 }
 
 
