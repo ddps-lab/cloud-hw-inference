@@ -197,7 +197,8 @@ def inference(saved_model_name, batch_size):
             display_threshold+=display_every
 
         counter+=1
-        if counter == 
+        if counter == 100:
+            break
 
     iter_times = np.array(iter_times)
     acc_cpu = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
