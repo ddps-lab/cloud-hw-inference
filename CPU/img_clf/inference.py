@@ -5,21 +5,105 @@ import pandas as pd
 import argparse
 
 from tensorflow.keras.models import load_model
-from tensorflow.keras.applications import (
-    xception,
-    vgg16,
-    resnet50,
+from tensorflow.keras.applications import ( 
+#     xception,
+#     vgg16,
+    vgg19,
+    resnet,
+#     resnet50,
+    resnet_v2,
     inception_v3,
-    mobilenet_v2,
+    inception_resnet_v2,
+    mobilenet,
+    densenet,
+    nasnet,
+#     mobilenet_v2,
+    efficientnet,
+    efficientnet_v2,
+    mobilenet_v3,
+    MobileNetV3Small,
+    MobileNetV3Large,
 )
+input_tensor = Input(shape=(224, 224, 3))
+
 models = {
-    'xception':xception,
-    'vgg16':vgg16,
-    'resnet50':resnet50,
-    'inception_v3':inception_v3,
-    'mobilenet_v2':mobilenet_v2,
+#     'xception':xception,
+#     'vgg16':vgg16,
+    'vgg19':vgg19,
+#     'resnet50':resnet50,
+    'resnet101':resnet,
+    'resnet152':resnet,
+    'resnet50_v2':resnet_v2,
+    'resnet101_v2':resnet_v2,
+    'resnet152_v2':resnet_v2,
+#     'inception_v3':inception_v3,
+    'inception_resnet_v2':inception_resnet_v2,
+    'mobilenet':mobilenet,
+    'densenet121':densenet,
+    'densenet169':densenet,
+    'densenet201':densenet,
+    'nasnetmobile':nasnet,
+    'nasnetlarge':nasnet,
+#     'mobilenet_v2':mobilenet_v2
+    'efficientnetb0':efficientnet,
+    'efficientnetb1':efficientnet,
+    'efficientnetb2':efficientnet,
+    'efficientnetb3':efficientnet,
+    'efficientnetb4':efficientnet,
+    'efficientnetb5':efficientnet,
+    'efficientnetb6':efficientnet,
+    'efficientnetb7':efficientnet,
+    'efficientnet_v2b0':efficientnet_v2,
+    'efficientnet_v2b1':efficientnet_v2,
+    'efficientnet_v2b2':efficientnet_v2,
+    'efficientnet_v2b3':efficientnet_v2,
+    'efficientnet_v2l':efficientnet_v2,
+    'efficientnet_v2m':efficientnet_v2,
+    'efficientnet_v2s':efficientnet_v2,
+    'mobilenet_v3small':mobilenet_v3,
+    'mobilenet_v3large':mobilenet_v3,
 }
 
+models_detail = {
+#     'xception':xception.Xception(weights='imagenet'),
+#     'vgg16':vgg16.VGG16(weights='imagenet'),
+#     'resnet50':resnet50.ResNet50(weights='imagenet'),
+    'resnet101':resnet.ResNet101(weights='imagenet'),
+    'resnet152':resnet.ResNet152(weights='imagenet'),
+    'resnet50_v2':resnet_v2.ResNet50V2(weights='imagenet'),
+    'resnet101_v2':resnet_v2.ResNet101V2(weights='imagenet'),
+    'resnet152_v2':resnet_v2.ResNet152V2(weights='imagenet'),
+#     'inception_v3':inception_v3.InceptionV3(weights='imagenet'),
+    'inception_resnet_v2':inception_resnet_v2.InceptionResNetV2(weights='imagenet'),
+    'mobilenet':mobilenet.MobileNet(weights='imagenet'),
+    'densenet121':densenet.DenseNet121(weights='imagenet'),
+    'densenet169':densenet.DenseNet169(weights='imagenet'),
+    'densenet201':densenet.DenseNet201(weights='imagenet'),
+    'nasnetmobile':nasnet.NASNetMobile(weights='imagenet'),
+#     'mobilenet_v2':mobilenet_v2.MobileNetV2(weights='imagenet'),
+    'efficientnetb0':efficientnet.EfficientNetB0(weights='imagenet'),
+    'efficientnetb1':efficientnet.EfficientNetB1(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb2':efficientnet.EfficientNetB2(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb3':efficientnet.EfficientNetB3(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb4':efficientnet.EfficientNetB4(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb5':efficientnet.EfficientNetB5(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb6':efficientnet.EfficientNetB6(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnetb7':efficientnet.EfficientNetB7(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b0':efficientnet_v2.EfficientNetV2B0(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b1':efficientnet_v2.EfficientNetV2B1(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b2':efficientnet_v2.EfficientNetV2B2(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2b3':efficientnet_v2.EfficientNetV2B3(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2l':efficientnet_v2.EfficientNetV2L(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2m':efficientnet_v2.EfficientNetV2M(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'efficientnet_v2s':efficientnet_v2.EfficientNetV2S(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'mobilenet_v3small':MobileNetV3Small(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'mobilenet_v3large':MobileNetV3Large(input_tensor=input_tensor, weights='imagenet', include_top=True),
+    'vgg19':vgg19.VGG19(weights='imagenet'),
+    'nasnetlarge':nasnet.NASNetLarge(input_tensor=input_tensor, weights='imagenet', include_top=True),
+}
+model_types = [key for key, value in models_detail.items()]
+
+print(model_types)
 
 def deserialize_image_record(record):
     feature_map = {'image/encoded': tf.io.FixedLenFeature([], tf.string, ''),
@@ -113,7 +197,7 @@ def inference(saved_model_name, batch_size):
             display_threshold+=display_every
 
         counter+=1
-            
+        if counter == 
 
     iter_times = np.array(iter_times)
     acc_cpu = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
@@ -134,25 +218,27 @@ def inference(saved_model_name, batch_size):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model',default='resnet50' , type=str )
-    parser.add_argument('--batch_list',default=[1,2,4,8,16,32,64], type=list)
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--model',default='resnet50' , type=str )
+#     parser.add_argument('--batch_list',default=[1,2,4,8,16,32,64], type=list)
 
-    model = parser.parse_args().model
-    batch_list = parser.parse_args().batch_list
-
+#     model = parser.parse_args().model
+#     batch_list = parser.parse_args().batch_list
+    batch_list = [1]
     
-    results = pd.DataFrame()
+    for model in model_types:
 
-    for batch_size in batch_list:
-        opt = {'batch_size': batch_size}
-        iter_ds = pd.DataFrame()
-        
-        print(f'{model}-{batch_size} start')
-        res, iter_times = inference(model, int(batch_size))
-        col_name = lambda opt: f'{model}_{batch_size}'
-        
-        iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
-        results = pd.concat([results, res], axis=1)
-        print(results)
-    results.to_csv(f'{model}.csv')
+        results = pd.DataFrame()
+
+        for batch_size in batch_list:
+            opt = {'batch_size': batch_size}
+            iter_ds = pd.DataFrame()
+
+            print(f'{model}-{batch_size} start')
+            res, iter_times = inference(model, int(batch_size))
+            col_name = lambda opt: f'{model}_{batch_size}'
+
+            iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
+            results = pd.concat([results, res], axis=1)
+            print(results)
+        results.to_csv(f'{model}.csv')
