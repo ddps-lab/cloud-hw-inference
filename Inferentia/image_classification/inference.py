@@ -175,7 +175,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
         return results, iter_times
     except:
         results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
-        return result, 0
+        return results, 0
   
 model_types = [key for key, value in models.items()]
 
