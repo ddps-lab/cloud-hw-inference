@@ -21,7 +21,12 @@ from tensorflow.keras.applications import (
     mobilenet,
     densenet,
     nasnet,
-    mobilenet_v2
+    mobilenet_v2,
+    efficientnet,
+    efficientnet_v2,
+    mobilenet_v3,
+    MobileNetV3Small,
+    MobileNetV3Large,
 )
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.models import load_model
@@ -29,28 +34,42 @@ from concurrent import futures
 from itertools import compress
 
 models = {
-    'xception':xception,
-    'vgg16':vgg16,
-#     'vgg19':vgg19,
-    'resnet50':resnet50,
-#     'resnet101':resnet,
-#     'resnet152':resnet,
-#     'resnet50_v2':resnet_v2,
-#     'resnet101_v2':resnet_v2,
-#     'resnet152_v2':resnet_v2,
-#     'resnext50':resnext,
-#     'resnext101':resnext,
-    'inception_v3':inception_v3,
-#     'inception_resnet_v2':inception_resnet_v2,
-#     'mobilenet':mobilenet,
-#     'densenet121':densenet,
-#     'densenet169':densenet,
-#     'densenet201':densenet,
-#     'nasnetlarge':nasnet,
-#     'nasnetmobile':nasnet,
-    'mobilenet_v2':mobilenet_v2
+#     'xception':xception,
+#     'vgg16':vgg16,
+    'vgg19':vgg19,
+#     'resnet50':resnet50,
+    'resnet101':resnet,
+    'resnet152':resnet,
+    'resnet50_v2':resnet_v2,
+    'resnet101_v2':resnet_v2,
+    'resnet152_v2':resnet_v2,
+#     'inception_v3':inception_v3,
+    'inception_resnet_v2':inception_resnet_v2,
+    'mobilenet':mobilenet,
+    'densenet121':densenet,
+    'densenet169':densenet,
+    'densenet201':densenet,
+    'nasnetmobile':nasnet,
+    'nasnetlarge':nasnet,
+#     'mobilenet_v2':mobilenet_v2
+    'efficientnetb0':efficientnet,
+    'efficientnetb1':efficientnet,
+    'efficientnetb2':efficientnet,
+    'efficientnetb3':efficientnet,
+    'efficientnetb4':efficientnet,
+    'efficientnetb5':efficientnet,
+    'efficientnetb6':efficientnet,
+    'efficientnetb7':efficientnet,
+    'efficientnet_v2b0':efficientnet_v2,
+    'efficientnet_v2b1':efficientnet_v2,
+    'efficientnet_v2b2':efficientnet_v2,
+    'efficientnet_v2b3':efficientnet_v2,
+    'efficientnet_v2l':efficientnet_v2,
+    'efficientnet_v2m':efficientnet_v2,
+    'efficientnet_v2s':efficientnet_v2,
+    'mobilenet_v3small':mobilenet_v3,
+    'mobilenet_v3large':mobilenet_v3,
 }
-
 data_dir = os.environ['dataset']
 
 mtype = ""
@@ -135,8 +154,10 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
         if counter*batch_size >= display_threshold:
             print(f'Images {counter*batch_size}/{total_datas}. Average i/s {np.mean(batch_size/np.array(iter_times[-display_every:]))}')
             display_threshold+=display_every
-
+        
         counter+=1
+        if counter == 100:
+            break
         
     iter_times = np.array(iter_times)
     acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
@@ -152,7 +173,7 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
 
     return results, iter_times
   
-model_types = ['xception', 'resnet50', 'vgg16']
+model_types = [key for key, value in models.items()]
 
 for model_type in model_types:
     mtype = model_type
@@ -163,7 +184,7 @@ for model_type in model_types:
     # testing batch size
 #     batch_list = [1, 2, 4, 8, 16, 32, 64]
     batch_list = [1]
-    user_batchs = [1, 2, 4, 8, 16, 32, 64]
+    user_batchs = [1]
     inf1_model_dir = f'{model_type}_inf1_saved_models'
     
     iter_ds = pd.DataFrame()
@@ -187,4 +208,4 @@ for model_type in model_types:
             iter_ds = pd.concat([iter_ds, pd.DataFrame(iter_times, columns=[col_name(opt)])], axis=1)
             results = pd.concat([results, res], axis=1)
         print(results)
-    results.to_csv(f'{model_type}_batch_size_{user_batch}.csv')
+    results.to_csv(f'inf_{model_type}_batch_size_{user_batch}.csv')
