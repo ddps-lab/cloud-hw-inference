@@ -141,37 +141,41 @@ def inf1_predict_benchmark_single_threaded(neuron_saved_model_name, batch_size, 
     ds = get_dataset(user_batch_size, use_cache)
     counter = 0
     
-    for batch, batch_labels in ds:
-        start_time = time.time()
-        yhat_np = inference_function(batch)
-        if counter ==0:
-            first_iter_time = time.time() - start_time
-        else:
-            iter_times.append(time.time() - start_time)
-        actual_labels.extend(label for label_list in batch_labels for label in label_list)
-        pred_labels.extend(list(np.argmax(yhat_np, axis=1)))
+    try:
+        for batch, batch_labels in ds:
+            start_time = time.time()
+            yhat_np = inference_function(batch)
+            if counter ==0:
+                first_iter_time = time.time() - start_time
+            else:
+                iter_times.append(time.time() - start_time)
+            actual_labels.extend(label for label_list in batch_labels for label in label_list)
+            pred_labels.extend(list(np.argmax(yhat_np, axis=1)))
 
-        if counter*batch_size >= display_threshold:
-            print(f'Images {counter*batch_size}/{total_datas}. Average i/s {np.mean(batch_size/np.array(iter_times[-display_every:]))}')
-            display_threshold+=display_every
-        
-        counter+=1
-        if counter == 100:
-            break
-        
-    iter_times = np.array(iter_times)
-    acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
-    results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
-    results.loc['batch_size']              = [batch_size]
-    results.loc['user_batch_size']              = [user_batch_size]
-    results.loc['accuracy']                = [acc_inf1]
-    results.loc['first_prediction_time']   = [first_iter_time * 1000]
-    results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
-    results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
-    results.loc['load_time']               = [load_time * 1000]
-    results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
+            if counter*batch_size >= display_threshold:
+                print(f'Images {counter*batch_size}/{total_datas}. Average i/s {np.mean(batch_size/np.array(iter_times[-display_every:]))}')
+                display_threshold+=display_every
 
-    return results, iter_times
+            counter+=1
+            if counter == 100:
+                break
+
+        iter_times = np.array(iter_times)
+        acc_inf1 = np.sum(np.array(actual_labels) == np.array(pred_labels))/len(actual_labels)
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
+        results.loc['batch_size']              = [batch_size]
+        results.loc['user_batch_size']              = [user_batch_size]
+        results.loc['accuracy']                = [acc_inf1]
+        results.loc['first_prediction_time']   = [first_iter_time * 1000]
+        results.loc['next_inference_time_mean'] = [np.mean(iter_times) * 1000]
+        results.loc['next_inference_time_median'] = [np.median(iter_times) * 1000]
+        results.loc['load_time']               = [load_time * 1000]
+        results.loc['wall_time']               = [(time.time() - walltime_start) * 1000]
+
+        return results, iter_times
+    except:
+        results = pd.DataFrame(columns = [f'inf1_tf2_{model_type}_{batch_size}'])
+        return result, 0
   
 model_types = [key for key, value in models.items()]
 
