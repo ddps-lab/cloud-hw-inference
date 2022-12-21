@@ -103,7 +103,7 @@ def val_preprocessing(record):
     
     image = tf.image.resize(image, [new_height, new_width], method='bicubic')
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
-    if "xception" in mtype or "inception_v3" in mtype:
+    if "xception" in mtype or "inception" in mtype:
         image = tf.image.resize_with_crop_or_pad(image, 299, 299)
     
     image = models[model_type].preprocess_input(image)
