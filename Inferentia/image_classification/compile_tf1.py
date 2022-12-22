@@ -150,7 +150,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     model = load_model(saved_model_dir, compile=True)
     
     start_time = time.time()
-    compiled_res = tfn.saved_model.compile(model_dir, compiled_model_dir)
+    compiled_res = tfn.saved_model.compile(saved_model_dir, compiled_model_dir)
     print(f'Compile time: {time.time() - start_time}')
     
     compile_success = False
