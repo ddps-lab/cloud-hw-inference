@@ -124,10 +124,15 @@ for model_type in model_types:
 
     saved_model_dir = f'{model_type}_saved_model'
     shutil.rmtree(saved_model_dir, ignore_errors=True)
-
+    
     model = models_detail[model_type]
-
-    model.save(saved_model_dir)
+    # tf1 api
+    tf.saved_model.simple_save(session = keras.backend.get_session(),
+                           export_dir = saved_model_dir,
+                           inputs = {'input_1:0': model.inputs[0]},
+                           outputs = {'probs/Softmax:0': model.outputs[0]})
+    #tf2 api
+#     model.save(saved_model_dir)
 
     from tensorflow.keras.models import load_model
     model = load_model(saved_model_dir, compile=True)
