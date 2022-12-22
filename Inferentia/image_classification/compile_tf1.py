@@ -128,9 +128,7 @@ for model_type in model_types:
     model = models_detail[model_type]
     # tf1 api
     tf.saved_model.simple_save(session = keras.backend.get_session(),
-                           export_dir = saved_model_dir,
-                           inputs = {'input_1:0': model.inputs[0]},
-                           outputs = {'probs/Softmax:0': model.outputs[0]})
+                           export_dir = saved_model_dir)
     #tf2 api
 #     model.save(saved_model_dir)
 
