@@ -166,7 +166,7 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
             
     print(inf1_compiled_model_dir)
     print(compiled_res)
-    model_neuron_ratios.append(prec_on_inf)
+    model_neuron_ratios.append(perc_on_inf)
     print('----------- Done! ----------- \n')
     
     return compile_success
