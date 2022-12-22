@@ -124,6 +124,7 @@ for model_type in model_types:
 
     saved_model_dir = f'{model_type}_saved_model'
     shutil.rmtree(saved_model_dir, ignore_errors=True)
+    os.mkdir(saved_model_dir)
     
     model = models_detail[model_type]
     # tf1 api
