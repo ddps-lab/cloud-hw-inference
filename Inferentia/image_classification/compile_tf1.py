@@ -132,10 +132,10 @@ for model_type in model_types:
     #tf2 api
 #     model.save(saved_model_dir)
 
-    from tensorflow.keras.models import load_model
-    model = load_model(saved_model_dir, compile=True)
+#     from tensorflow.keras.models import load_model
+#     model = load_model(saved_model_dir, compile=True)
 
-    model.summary()
+#     model.summary()
 
     
 def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=1, use_static_weights=False):
@@ -147,10 +147,10 @@ def compile_inf1_model(saved_model_dir, inf1_model_dir, batch_size=1, num_cores=
     shutil.rmtree(inf1_compiled_model_dir, ignore_errors=True)
 
     example_input = np.zeros([batch_size,224,224,3], dtype='float32')
-    if "xception" in saved_model_dir or "inception_v3" in saved_model_dir:
+    if "xception" in saved_model_dir or "inception" in saved_model_dir:
         example_input = np.zeros([batch_size,299,299,3], dtype='float32')
         
-    model = load_model(saved_model_dir, compile=True)
+#     model = load_model(saved_model_dir, compile=True)
     
     start_time = time.time()
     compiled_res = tfn.saved_model.compile(saved_model_dir, compiled_model_dir)
